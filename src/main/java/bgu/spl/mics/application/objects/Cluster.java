@@ -10,12 +10,27 @@ package bgu.spl.mics.application.objects;
  */
 public class Cluster {
 
-
+	static Cluster cluster;
 	/**
      * Retrieves the single instance of this class.
      */
 	public static Cluster getInstance() {
-		//TODO: Implement this
+		if (cluster == null) {
+			cluster = new Cluster();
+		}
+		return cluster;
+	}
+
+	public int getNumOfBatchesProcessedByCPUs() {
+		return 0;
+	}
+
+	public void pushBatchToProcess(DataBatch batch){
+		// TODO
+	}
+
+	public DataBatch pullBatchToProcess(){
+		// TODO
 		return null;
 	}
 
