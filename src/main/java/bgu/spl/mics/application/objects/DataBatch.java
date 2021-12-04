@@ -10,13 +10,17 @@ public class DataBatch {
     int startIndex; // The index of the first sample in the batch
     int size;
     GPU gpu; // The origin GPU that sent the batch. 
+
+    // Statistics.
     boolean doneProcessing;    
+    boolean doneTraining;    
 
     public DataBatch(GPU gpu, Data data, int startIndex) {
         this.data = data;
         this.startIndex = startIndex;
         this.gpu = gpu;
         this.doneProcessing = false;
+        this.doneTraining = false;
         this.size = 1000;
     } 
 
@@ -38,11 +42,25 @@ public class DataBatch {
      * @return this.doneProcessing.
      * 
      * @pre none
-     * @inv calling this function doesn't change anything in the class.
      * @post none
      */
-    public boolean getDoneProcessing() {
+    public boolean isDoneProcessing() {
         return this.doneProcessing;
     }
 
+
+    /**
+     * Returns if the batch has processed;
+     * @return this.doneProcessing.
+     * 
+     * @pre none
+     * @post none
+     */
+    public boolean isDoneTraining() {
+        return this.doneTraining;
+    }
+
+    public void setAsProcessed() {
+        this.doneProcessing = true;
+    }
 }

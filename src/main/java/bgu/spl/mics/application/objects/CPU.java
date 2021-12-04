@@ -56,8 +56,7 @@ public class CPU {
      * @return this.nCores
      * 
      * @pre none
-     * @inv calling this function doesn't change anything in the class.
-     * @post none
+     * @post none.
      */
     public int getNumOfCores() {
         return this.nCores;
@@ -68,7 +67,6 @@ public class CPU {
      * @return this.nOfTimePass
      * 
      * @pre none
-     * @inv calling this function doesn't change anything in the class.
      * @post none
      */
     public long getNumOfTimePass() {
@@ -80,7 +78,6 @@ public class CPU {
      * @return this.nOfProcessedBatches.
      * 
      * @pre none.
-     * @inv calling this function doesn't change anything in the class.
      * @post {@return} = this.nOfProcessedBatches
      */
     public long getNumOfProcessedBatches() {
@@ -96,7 +93,6 @@ public class CPU {
      * @return number of ticks.
      * 
      * @pre {@param type} is a valid type
-     * @inv calling this function doesn't change anything in the class.
      * @post {@return} != 0
      */
     private int numOfTickToProcess(Data.Type type) {
@@ -110,7 +106,6 @@ public class CPU {
      * @return DataBatch
      * 
      * @pre none
-     * @inv calling this function doesn't change anything in the class.
      * @post if this.cluster.hasBatchToProcess then {@return} != null else {@return} = nul.
      */
     protected DataBatch tryToFetchBatch() {
@@ -121,12 +116,10 @@ public class CPU {
      * This function is a placeholder function. 
      * It gets a {@type DataBatch} as param and starts process it.
      * This function actually do nothing but it illustrait that processing is taking care of.
-     * Exceptions throws when input isn't valid.
      * @param data
      * 
      * @pre {@param v} != null
-     * @inv TODO
-     * @post none 
+     * @post TODO 
      */
     protected void StartProcessingBatch(DataBatch batch) throws IllegalArgumentException{
     }
@@ -141,7 +134,6 @@ public class CPU {
      * 
      * @pre {@param batch} !- null
      *  &&  {@param batch.getIsProcessed()} = true 
-     * @inv
      * @post @post(this.getNumOfProcessedBatches()) = @pre(this.getNumOfProcessedBatches())
      */
     protected void finalizeProcessBatch(DataBatch batch) throws IllegalArgumentException {
@@ -155,7 +147,6 @@ public class CPU {
      * 
      * @pre {@param batch} !- null
      *  &&  {@param batch.getIsProcessed()} = true 
-     * @inv calling this function doesn't change anything in the class.
      * @post none
      */
     protected void sendProcessedBatch(DataBatch batch) throws IllegalArgumentException {
@@ -171,8 +162,7 @@ public class CPU {
      * 3. Start process a new batch.
      * If not: just advance internal counter.
      * @pre none
-     * @inv TODO
-     * @post TODD
+     * @post all of the above
      */
     public void tickSystem() {
     }

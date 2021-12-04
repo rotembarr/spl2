@@ -25,13 +25,28 @@ public class Cluster {
 		return 0;
 	}
 
+	public int getNumOfBatchesWaitingToProcess() {
+		return 0;
+	}
+
 	public void pushBatchToProcess(DataBatch batch){
 		// TODO
 	}
 
-	public DataBatch pullBatchToProcess(){
+	public DataBatch popBatchToProcess(){
 		// TODO
 		return null;
 	}
 
+	public void pushProcessedBatch(DataBatch batch){
+	}
+
+	public DataBatch popProcessedBatch(GPU gpu){
+		// TODO
+		return null;
+	}
+
+	public boolean processedBatchExist(GPU gpu) {
+		return false;
+	}
 }
