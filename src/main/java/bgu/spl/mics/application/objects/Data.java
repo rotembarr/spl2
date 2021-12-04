@@ -20,9 +20,9 @@ public class Data {
     private int nTrainedBatches; // The number of samples wich the gpu has proccesed.
 
     public Data(Type t) {
-        this.type = t;
-        
+        this.type = t;        
     }
+    
     /**
      * Returns the type of the data;
      * @return this.data.

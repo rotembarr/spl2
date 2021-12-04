@@ -117,6 +117,15 @@ public class MessageBusImpl implements MessageBus {
 		return null;
 	}
 
+	boolean isSubscribedBrodcast(Class<? extends Broadcast> b, MicroService m){
+		return false;
+	}
+	<T> boolean isSubscribedEvent(MicroService m, Event<T> e){
+		return false;
+	}
+	boolean isRegister(MicroService m){
+		return false;
+	}
 	
 
 }

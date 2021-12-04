@@ -262,19 +262,18 @@ public class GPUTest extends GPU{
                 try {
                     object.wait();
                 } catch (Exception e) {
-                    System.out.println("Test failed");
-                    return;
+                    assertEquals("Test failed", true, false);
                 }
                 cpu.tickSystem();
             }
         });
+
         Thread tickThread = new Thread(()-> {
             while (true) {
                 try {
                     Thread.sleep(1);
                 } catch (Exception e) {
-                    System.out.println("Test failed");
-                    return;
+                    assertEquals("Test failed", true, false);
                 }
                 object.notifyAll();
             }
@@ -284,8 +283,7 @@ public class GPUTest extends GPU{
                 try {
                     object.wait();
                 } catch (Exception e) {
-                    System.out.println("Test failed");
-                    return;
+                    assertEquals("Test failed", true, false);
                 }
                 super.tickSystem();
             }
@@ -298,8 +296,7 @@ public class GPUTest extends GPU{
         try {
             Thread.sleep(1000);
         } catch (Exception e) {
-            System.out.println("Test failed");
-            return;
+            assertEquals("Test failed", true, false);
         }
 
         cpuThread.interrupt();
