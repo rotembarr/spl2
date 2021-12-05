@@ -286,6 +286,27 @@ public class GPUTest extends GPU{
     }
 
     @Test
+    public void TestTickSystem_Sanity() {
+        Queue<Model> queue = new LinkedList<Model>();
+        CPU cpu = new CPU();
+
+        for (int i = 0; i < 5; i++) {
+            Model model = new Model("a", new Data(Data.Type.Images), new Student());
+            queue.add(model);
+            super.insertNewModel(model);
+        }
+
+        for (int i = 0; i < 10000; i++) {
+            super.tickSystem();
+            cpu.tickSystem();
+        }
+
+        assertEquals("Test failed", 5000, super.getNumOfTrainedBatches());
+
+    }
+
+
+    // @Test
     public void TestTickSystem_testThrougput() {
         Queue<Model> queue = new LinkedList<Model>();
         Object object = new Object();
@@ -311,13 +332,13 @@ public class GPUTest extends GPU{
         });
 
         Thread tickThread = new Thread(()-> {
-            while (true) {
+            for (int i = 0; i < 1000; i++) {
                 try {
                     Thread.sleep(1);
                 } catch (Exception e) {
                     waitExep[1] = true;
                 }
-                object.notify();
+                object.notifyAll();
             }
         });
         Thread gpuThread = new Thread(()-> {
