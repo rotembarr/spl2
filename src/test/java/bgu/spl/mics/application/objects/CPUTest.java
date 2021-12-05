@@ -2,6 +2,7 @@ package bgu.spl.mics.application.objects;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import java.util.LinkedList;
@@ -32,30 +33,36 @@ public class CPUTest extends CPU{
     @Test 
     public void TestGetNuomOfTimePass() {
         // Has to be 0 at first.
-        assertEquals(0, super.getNumOfTimePass());
+        assertEquals(0, super.getNumOfTimeUsed());
 
         // advance random time.
         int n = (int)(Math.random()*(100)) + 1;
         for (int i = 0; i < n; i++) {
             super.tickSystem();
         }
-        assertEquals(n, super.getNumOfTimePass());
+        assertEquals(n, super.getNumOfTimeUsed());
     }
 
     @Test 
     public void TestGetNumOfProcessedBatches() {
+        DataBatch batch = null;
         // Has to be 0 at first.
         assertEquals(0, super.getNumOfProcessedBatches());
 
         // Process one.
-        super.finalizeProcessBatch(new DataBatch(new GPU(GPU.Type.RTX2080), new Data(Data.Type.Tabular), 7));
+        batch = new DataBatch(new GPU(GPU.Type.RTX2080), new Data(Data.Type.Tabular), 7);
+        super.StartProcessingBatch(batch);
+        super.finalizeProcessBatch(batch);
         assertEquals(1, super.getNumOfProcessedBatches());
 
         // Process random number.
         int n = (int)(Math.random()*(100)) + 1;
         for (int i = 0; i < n; i++) {
-            super.finalizeProcessBatch(new DataBatch(new GPU(GPU.Type.RTX2080), new Data(Data.Type.Tabular), 7));
+            batch = new DataBatch(new GPU(GPU.Type.RTX2080), new Data(Data.Type.Tabular), 7);
+            super.StartProcessingBatch(batch);
+            super.finalizeProcessBatch(batch);
         }
+
         assertEquals(1+n, super.getNumOfProcessedBatches());
     }
 
@@ -108,87 +115,103 @@ public class CPUTest extends CPU{
     }
 
     // Start processing
-    @Test(expected = Exception.class)
+    @Test
     public void TestStartProcessingBatch_NullArg() {
         DataBatch batch = null;
-        super.StartProcessingBatch(batch);        
+        assertThrows(IllegalArgumentException.class, () -> {super.StartProcessingBatch(batch);});
     }
 
-    @Test(expected = Exception.class)
+    @Test
     public void TestStartProcessingBatch_NullGPU() {
         DataBatch batch = new DataBatch(null, new Data(Data.Type.Tabular), 7);
-        super.StartProcessingBatch(batch); 
+        assertThrows(IllegalArgumentException.class, () -> {super.StartProcessingBatch(batch);});
     }
 
-    @Test(expected = Exception.class)
+    @Test
     public void TestStartProcessingBatch_NullData() {
         DataBatch batch = new DataBatch(new GPU(GPU.Type.RTX2080), null, 7);
-        super.StartProcessingBatch(batch); 
+        assertThrows(IllegalArgumentException.class, () -> {super.StartProcessingBatch(batch);});
     }
 
-    @Test(expected = Exception.class)
+    @Test
     public void TestStartProcessingBatch_SendProcessedBatch() {
         DataBatch batch = new DataBatch(new GPU(GPU.Type.RTX2080), new Data(Data.Type.Tabular), 7);
-        super.finalizeProcessBatch(batch);
         super.StartProcessingBatch(batch);
+        super.finalizeProcessBatch(batch);
+        assertThrows(IllegalArgumentException.class, () -> {super.StartProcessingBatch(batch);});
     }
 
 
-    @Test(expected = Exception.class)
+    @Test
     public void TestStartProcessingBatch_startTwice() {
         DataBatch batch = new DataBatch(new GPU(GPU.Type.RTX2080), new Data(Data.Type.Tabular), 7);
         super.StartProcessingBatch(batch);
-        super.StartProcessingBatch(batch);
+        assertThrows(IllegalArgumentException.class, () -> {super.StartProcessingBatch(batch);});
     }
 
-    @Test(expected = Exception.class)
+    @Test
     public void TestStartProcessingBatch_Burst() {
         for (int i = 0; i < 100; i++) {
             DataBatch batch = new DataBatch(new GPU(GPU.Type.RTX2080), new Data(Data.Type.Tabular), i);
             super.StartProcessingBatch(batch);
+            super.finalizeProcessBatch(batch);
         }
     }
 
     // FinalizeProcessBatch
-    @Test(expected = Exception.class)
+    @Test
     public void finalizeProcessBatch_NullArgs() {
-        super.finalizeProcessBatch(null);
+        assertThrows(IllegalArgumentException.class, () -> {super.finalizeProcessBatch(null);});
     }
 
-    @Test(expected = Exception.class)
+    @Test
     public void finalizeProcessBatch_FinalizeTwice() {
         DataBatch batch = new DataBatch(new GPU(GPU.Type.RTX2080), new Data(Data.Type.Tabular), 7);
+        super.StartProcessingBatch(batch);
         super.finalizeProcessBatch(batch);
-        super.finalizeProcessBatch(batch);
+        assertThrows(IllegalArgumentException.class, () -> {super.finalizeProcessBatch(batch);});
     }
+
+    @Test
+    public void finalizeProcessBatch_FinalizedWithoutStart() {
+        DataBatch batch = new DataBatch(new GPU(GPU.Type.RTX2080), new Data(Data.Type.Tabular), 7);
+        assertThrows(IllegalArgumentException.class, () -> {super.finalizeProcessBatch(batch);});
+    }
+
 
     @Test
     public void finalizeProcessBatch_Burst() {
         for (int i = 0; i < 100; i++) {
             DataBatch batch = new DataBatch(new GPU(GPU.Type.RTX2080), new Data(Data.Type.Tabular), i);
+            super.StartProcessingBatch(batch);
             super.finalizeProcessBatch(batch);
         }
+        assertEquals("Somehow batches proceseed", 100, super.getNumOfProcessedBatches());
+
     }
 
     // SendProcessedBatch.
-    @Test(expected = Exception.class)
+    @Test
     public void TestSendProcessedBatch_NullArgs() {
-        super.sendProcessedBatch(null);
+        assertThrows(IllegalArgumentException.class, () -> {super.sendProcessedBatch(null);});
     }
 
-    @Test(expected = Exception.class)
+    @Test
     public void TestSendProcessedBatch_UnprocessedBatch() {
         DataBatch batch = new DataBatch(new GPU(GPU.Type.RTX2080), new Data(Data.Type.Tabular), 7);
-        super.sendProcessedBatch(batch);
+        assertThrows(IllegalArgumentException.class, () -> {super.sendProcessedBatch(batch);});
     }
 
     @Test
     public void TestSendProcessedBatch_Burst() {
+        GPU gpu = new GPU(GPU.Type.RTX2080);
         for (int i = 0; i < 100; i++) {
-            DataBatch batch = new DataBatch(new GPU(GPU.Type.RTX2080), new Data(Data.Type.Tabular), i);
+            DataBatch batch = new DataBatch(gpu, new Data(Data.Type.Tabular), i);
+            super.StartProcessingBatch(batch);
             super.finalizeProcessBatch(batch);
             super.sendProcessedBatch(batch);
         }
+        assertEquals("Bad num of processed batches recieved in cluster", 100, this.cluster.getNumOfBatchesProcessedByCPUs());
     }
 
     // TickSystem.
@@ -197,7 +220,9 @@ public class CPUTest extends CPU{
         for (int i = 0; i < 100; i++) {
             super.tickSystem();
         }
-        assertEquals("Somehow batches sent to cluster when not need", this.cluster.getNumOfBatchesProcessedByCPUs(), 0);
+        assertEquals("Somehow batches sent to cluster when not need", 0, this.cluster.getNumOfBatchesProcessedByCPUs());
+        assertEquals("Somehow batches proceseed", 0, super.getNumOfProcessedBatches());
+        assertEquals("Somehow batches proceseed", 100, super.getNumOfTimeUsed());
     }
 
     @Test
@@ -206,32 +231,33 @@ public class CPUTest extends CPU{
         this.cluster.pushBatchToProcess(new DataBatch(new GPU(GPU.Type.RTX2080), new Data(Data.Type.Text), 2));  
         this.cluster.pushBatchToProcess(new DataBatch(new GPU(GPU.Type.RTX2080), new Data(Data.Type.Images), 4));  
 
-        assertEquals("Somehow batches sent to cluster when not need", this.cluster.getNumOfBatchesProcessedByCPUs(), 0);
+        assertEquals("Somehow batches sent to cluster when not need", 0, this.cluster.getNumOfBatchesProcessedByCPUs());
 
         super.tickSystem();
-        assertEquals("Tabular hasnt processed in one clock", this.cluster.getNumOfBatchesProcessedByCPUs(), 1);
+        assertEquals("Tabular hasnt processed in one clock", 1, this.cluster.getNumOfBatchesProcessedByCPUs());
 
         super.tickSystem();
-        assertEquals("Somehow batches sent to cluster when not need", this.cluster.getNumOfBatchesProcessedByCPUs(), 1);
+        assertEquals("Somehow batches sent to cluster when not need", 1, this.cluster.getNumOfBatchesProcessedByCPUs());
         super.tickSystem();
-        assertEquals("Text hasnt processed in two clock", this.cluster.getNumOfBatchesProcessedByCPUs(), 2);
+        assertEquals("Text hasnt processed in two clock", 2, this.cluster.getNumOfBatchesProcessedByCPUs());
 
         super.tickSystem();
-        assertEquals("Somehow batches sent to cluster when not need", this.cluster.getNumOfBatchesProcessedByCPUs(), 2);
+        assertEquals("Somehow batches sent to cluster when not need", 2, this.cluster.getNumOfBatchesProcessedByCPUs());
         super.tickSystem();
-        assertEquals("Somehow batches sent to cluster when not need", this.cluster.getNumOfBatchesProcessedByCPUs(), 2);
+        assertEquals("Somehow batches sent to cluster when not need", 2, this.cluster.getNumOfBatchesProcessedByCPUs());
         super.tickSystem();
-        assertEquals("Somehow batches sent to cluster when not need", this.cluster.getNumOfBatchesProcessedByCPUs(), 2);
+        assertEquals("Somehow batches sent to cluster when not need", 2, this.cluster.getNumOfBatchesProcessedByCPUs());
         super.tickSystem();
-        assertEquals("Image hasnt processed in four clock", this.cluster.getNumOfBatchesProcessedByCPUs(), 3);
+        assertEquals("Image hasnt processed in four clock", 3, this.cluster.getNumOfBatchesProcessedByCPUs());
     }
 
     @Test
     public void TestTickSystem_testThrougput() {
         int numOfClockToProcess100Tabular = 101;
+        GPU gpu = new GPU(GPU.Type.RTX2080);
 
         for (int i = 1; i < 100; i++) {
-            this.cluster.pushBatchToProcess(new DataBatch(new GPU(GPU.Type.RTX2080), new Data(Data.Type.Tabular), i));
+            this.cluster.pushBatchToProcess(new DataBatch(gpu, new Data(Data.Type.Tabular), i));
         }  
 
         int cnt = 0;
@@ -241,33 +267,7 @@ public class CPUTest extends CPU{
         }
 
         assertEquals("Frocessing for too long", cnt, numOfClockToProcess100Tabular);
-
+        assertEquals("Somehow batches proceseed", 100, super.getNumOfProcessedBatches());
+        assertEquals("cluster havnt recieved processed batch", 100, this.cluster.getNumOfBatchesProcessedByCPUs());
     }
 }
-
-// Thread tFetch = new Thread(()->{
-//     long start = System.currentTimeMillis();
-//     super.fetchBatch();
-//     long end = System.currentTimeMillis();
-//     assertTrue("Fetching batch takes too short", (end-start) > 50);
-//     assertTrue("Fetching batch takes too long", (end-start) < 50);
-
-// });
-// Thread tSend = new Thread(()->{
-//     try {
-//         Thread.sleep(50);
-//         this.cluster.pushBatchToProcess(new DataBatch(new GPU(GPU.Type.RTX2080), new Data(Data.Type.Tabular), 7));
-//     } catch (Exception e) {
-//         assertTrue("Test Failed",false==true);
-//     }
-// });
-
-// tFetch.start();
-// tSend.start();
-// try {
-//     Thread.sleep(50);
-// } catch (Exception e) {
-//     assertTrue("Test Failed",false==true);
-// }
-// tFetch.interrupt();
-// tSend.interrupt();

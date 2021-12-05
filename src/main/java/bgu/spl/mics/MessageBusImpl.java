@@ -1,5 +1,7 @@
 package bgu.spl.mics;
 
+import bgu.spl.mics.example.messages.ExampleBroadcast;
+
 /**
  * The {@link MessageBusImpl class is the implementation of the MessageBus interface.
  * Write your implementation here!
@@ -12,8 +14,22 @@ public class MessageBusImpl implements MessageBus {
      * @post @result != null
      *  &&   @result = @post(getInstance) 
      */
-    MessageBus getInstance() {
+    public MessageBus getInstance() {
 		return null;
+	}
+
+
+    /**
+     * Indication if {@code m} register.
+     * @param m
+     * @return boolean
+     * 
+     * @pre none
+     * @post trivial
+	 * 
+	 */
+	boolean isRegister(MicroService m){
+		return false;
 	}
 
     /**
@@ -23,11 +39,10 @@ public class MessageBusImpl implements MessageBus {
      * @param m
      * @return boolean
      * 
-     * @pre {@code m} != null
-     * @post none
-     * @inv none
+     * @pre none
+     * @post trivial
      */
-    <T> boolean istSubscribedEvent(Class<? extends Event<T>> type, MicroService m) {
+    public <T> boolean isSubscribedEvent(Class<? extends Event<T>> type, MicroService m) {
 		return false;
 	}
     
@@ -38,41 +53,25 @@ public class MessageBusImpl implements MessageBus {
      * @param m
      * @return boolean
      * 
-     * @pre {@code m} != null
-     * @post none
-     * @inv none
+     * @pre none
+     * @post trivial
      */
-    boolean isSubscribedBroadcast(Class<? extends Broadcast> type, MicroService m) {
+    public boolean isSubscribedBroadcast(Class<? extends Broadcast> type, MicroService m) {
 		return false;	
 	}
    
-	/**
-     * @pre {@code m} != null
-     *  &&  @pre(this.isScubscribedEvent(type,m)) = false
-     * @post @post(this.isScubscribedEvent(type,m)) = true
-	 */
 	@Override
 	public <T> void subscribeEvent(Class<? extends Event<T>> type, MicroService m) {
 		// TODO Auto-generated method stub
 
 	}
 
-	/**
-     * @pre {@code m} != null
-     *  &&  @pre(this.isScubscribedBroadcast(type,m)) = false
-     * @post @post(this.isScubscribedEvent(type,m)) = true
-	 */
 	@Override
 	public void subscribeBroadcast(Class<? extends Broadcast> type, MicroService m) {
 		// TODO Auto-generated method stub
 
 	}
 
-	/**	
-     * @pre {@code e} != null && {@code T} != null
-     *  && {@code e} hasn't been completed before
-     * @post @post(complete(e, result)) 
-	 */
 	@Override
 	public <T> void complete(Event<T> e, T result) {
 		// TODO Auto-generated method stub
@@ -114,17 +113,7 @@ public class MessageBusImpl implements MessageBus {
 	@Override
 	public Message awaitMessage(MicroService m) throws InterruptedException {
 		// TODO Auto-generated method stub
-		return null;
-	}
-
-	boolean isSubscribedBrodcast(Class<? extends Broadcast> b, MicroService m){
-		return false;
-	}
-	<T> boolean isSubscribedEvent(MicroService m, Event<T> e){
-		return false;
-	}
-	boolean isRegister(MicroService m){
-		return false;
+		return new ExampleBroadcast("asdasdas");
 	}
 	
 

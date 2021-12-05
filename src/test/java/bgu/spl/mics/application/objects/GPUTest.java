@@ -2,11 +2,13 @@ package bgu.spl.mics.application.objects;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import java.util.LinkedList;
 import java.util.Queue;
 
 import org.junit.Test;
+import org.junit.runner.notification.RunListener.ThreadSafe;
 
 public class GPUTest extends GPU{
     Cluster cluster = null;
@@ -31,7 +33,7 @@ public class GPUTest extends GPU{
         names.add("a");
         names.add("b");
         names.add("c");
-        assertTrue("names vector error", names == super.getModelNames());
+        assertTrue("names vector error", names.equals(getModelNames()));
 
     }
 
@@ -48,15 +50,15 @@ public class GPUTest extends GPU{
         assertEquals(n, super.getNumOfTimePass());
     }
 
-    @Test(expected = Exception.class)
+    @Test
     public void TestTestResult_NullArg() {
-        super.testResult(null);
+        assertThrows(IllegalArgumentException.class, () -> {super.testResult(null);});
     }
 
     @Test(expected = Exception.class)
     public void TestTestResult_NotTrainedModel() {
         Model model = new Model("a", new Data(Data.Type.Images), new Student());
-        super.testResult(model);
+        assertThrows(IllegalArgumentException.class, () -> {super.testResult(model);});
     }
 
     @Test
@@ -65,23 +67,24 @@ public class GPUTest extends GPU{
             Model model = new Model("a", new Data(Data.Type.Images), new Student());
             super.insertNewModel(model);
             super.doneTrainingModel(model);
-            super.testResult(model);
+            Model.Result result = super.testResult(model);
+            assertTrue("bad test", (result == Model.Result.GOOD) || result == Model.Result.BAD); ;
         }
     }
 
-    @Test(expected = Exception.class)
+    @Test
     public void TestInsertNewModel_NullArg() { 
-        super.insertNewModel(null);
+        assertThrows(IllegalArgumentException.class, () -> {super.insertNewModel(null);});
     }
 
-    @Test(expected = Exception.class)
+    @Test
     public void TestInsertNewModel_TwiceTrainedModel() {
         Model model = new Model("a", new Data(Data.Type.Images), new Student());        
         super.insertNewModel(model);
         super.doneTrainingModel(model);
-        super.doneTrainingModel(model);
+        assertThrows(IllegalArgumentException.class, () -> {super.doneTrainingModel(model);});
     }
-
+    
     @Test
     public void TestInsertNewModel_batch() {
         for (int i = 1; i < 300; i++) {
@@ -91,16 +94,16 @@ public class GPUTest extends GPU{
         assertEquals("Insert models failure", 300, super.getModelsQueueSize());
     }
 
-    @Test(expected = Exception.class)
+    @Test
     public void TestSendBatchToProcess_NullArg() {
-        super.sendBatchToProcess(null);
+        assertThrows(IllegalArgumentException.class, () -> {super.sendBatchToProcess(null);});
     }
 
-    @Test(expected = Exception.class)
+    @Test
     public void TestSendBatchToProcess_ProcessedBatch() {
         DataBatch batch = new DataBatch(this, new Data(Data.Type.Tabular), 9);
         batch.setAsProcessed();
-        super.sendBatchToProcess(batch);
+        assertThrows(IllegalArgumentException.class, () -> {super.sendBatchToProcess(batch);});
     }
 
 
@@ -110,6 +113,13 @@ public class GPUTest extends GPU{
         DataBatch batch = new DataBatch(this, new Data(Data.Type.Tabular), 9);
         super.sendBatchToProcess(batch);
         assertEquals("bad numbers of batches in cluster", 1, this.cluster.getNumOfBatchesWaitingToProcess());
+
+        for (int i = 0; i < 99; i++) {
+            batch = new DataBatch(this, new Data(Data.Type.Tabular), 9);
+            super.sendBatchToProcess(batch);
+        }
+        assertEquals("bad numbers of batches in cluster", 100, this.cluster.getNumOfBatchesWaitingToProcess());
+
     }
 
     @Test
@@ -146,42 +156,73 @@ public class GPUTest extends GPU{
             super.finalizeTrainBatch(b);
         }
         assertEquals("Wrong fetched processed batch", null, super.tryToFetchProcessedBatch());        
-    }
-
-    // Thread tFetch = new Thread(() -> {
-    // });
-
-    // tFetch.start();
-    // try {
-    //     Thread.sleep(50);
-    // } catch (Exception e) {
-    //     assertTrue("Test Failed",false==true);
-    // }
+    }    
     
-    // tFetch.interrupt();
-    
-    
-    // try {
-    //     Thread.sleep(50);
-    // } catch (Exception e) {
-    //     assertTrue("Test Failed",false==true);
-    // }
-    // assertEquals("bad numbers of batches in cluster", super.vRAMsizeInBatches(), this.cluster.getNumOfBatchesWaitingToProcess());
+    // Function for test use
     private void trainBatch() {
         DataBatch batch = this.cluster.popBatchToProcess();
+        batch.setAsProcessed();
+        assertFalse("Trainig executed when not needed", super.isTraining());
         super.startTrainBatch(batch);   
+        assertTrue("Trainig not executed", super.isTraining());
         super.finalizeTrainBatch(batch);
+        assertFalse("Trainig still executed", super.isTraining());
     }
 
+    @Test
+    public void TestStartTrainBatchExcep() {
+        DataBatch badGPUBatch = new DataBatch(new GPU(GPU.Type.GTX1080), new Data(Data.Type.Tabular), 9);
+        DataBatch okBatch = new DataBatch(this, new Data(Data.Type.Tabular), 9);
+
+        assertThrows(IllegalArgumentException.class, () -> {super.startTrainBatch(null);});
+        assertThrows(IllegalArgumentException.class, () -> {super.startTrainBatch(badGPUBatch);});
+        assertThrows(IllegalArgumentException.class, () -> {super.startTrainBatch(okBatch);}); // havnet processed
+        
+        assertFalse("train shouldn't be start", super.isTraining());
+        okBatch.setAsProcessed();
+        super.startTrainBatch(okBatch); // This call is ok.
+        assertTrue("train should have start", super.isTraining());
+        
+        assertThrows(IllegalArgumentException.class, () -> {super.startTrainBatch(okBatch);});
+    }
+
+    @Test
+    public void TestFinalizeTrainBatchExcep() {
+        DataBatch badGPUBatch = new DataBatch(new GPU(GPU.Type.GTX1080), new Data(Data.Type.Tabular), 9);
+        DataBatch otherBatch = new DataBatch(this, new Data(Data.Type.Tabular), 9);
+        DataBatch okBatch = new DataBatch(this, new Data(Data.Type.Tabular), 9);
+
+        assertThrows(IllegalArgumentException.class, () -> {super.finalizeTrainBatch(null);});
+        
+        badGPUBatch.setAsProcessed();
+        // super.startTrainBatch(badGPUBatch); should be here but this function already throhs exception.
+        assertThrows(IllegalArgumentException.class, () -> {super.finalizeTrainBatch(badGPUBatch);});
+
+
+        otherBatch.setAsProcessed();
+        otherBatch.setAsTrained();
+        assertThrows(IllegalArgumentException.class, () -> {super.finalizeTrainBatch(otherBatch);}); // check when GPU isn't training.
+
+        assertFalse("train shouldn't be start", super.isTraining());
+        super.startTrainBatch(okBatch);
+        assertTrue("train should have start", super.isTraining());
+        super.finalizeTrainBatch(okBatch); // This call is ok.
+        assertFalse("train should done", super.isTraining());
+        
+        assertThrows(IllegalArgumentException.class, () -> {super.finalizeTrainBatch(okBatch);});
+    }
+
+    // fragmentizeBatchesToProcess
     @Test
     public void TestFragmentizeBatchesToProcess_SingleModel() {
         assertEquals("function havent implemented so test stuck. TODO - delete",false,true);
         assertEquals("Somehow batches sent to cluster when not need", 0, this.cluster.getNumOfBatchesWaitingToProcess());
+
         Model model = new Model("a", new Data(Data.Type.Images), new Student());
         super.insertNewModel(model);
 
         super.fragmentizeBatchesToProcess();
-        assertEquals("bad numbers of batches in cluster", super.vRAMsizeInBatches(), this.cluster.getNumOfBatchesWaitingToProcess());        
+        assertEquals("bad numbers of batches in cluster", super.vRAMsizeInBatches(), this.cluster.getNumOfBatchesWaitingToProcess());
         
         this.trainBatch();
         this.trainBatch();
@@ -248,6 +289,7 @@ public class GPUTest extends GPU{
     public void TestTickSystem_testThrougput() {
         Queue<Model> queue = new LinkedList<Model>();
         Object object = new Object();
+        final Boolean[] waitExep = {false,false};
 
         for (int i = 0; i < 5; i++) {
             Model model = new Model("a", new Data(Data.Type.Images), new Student());
@@ -262,7 +304,7 @@ public class GPUTest extends GPU{
                 try {
                     object.wait();
                 } catch (Exception e) {
-                    assertEquals("Test failed", true, false);
+                    waitExep[0] = true;
                 }
                 cpu.tickSystem();
             }
@@ -273,9 +315,9 @@ public class GPUTest extends GPU{
                 try {
                     Thread.sleep(1);
                 } catch (Exception e) {
-                    assertEquals("Test failed", true, false);
+                    waitExep[1] = true;
                 }
-                object.notifyAll();
+                object.notify();
             }
         });
         Thread gpuThread = new Thread(()-> {
@@ -283,7 +325,7 @@ public class GPUTest extends GPU{
                 try {
                     object.wait();
                 } catch (Exception e) {
-                    assertEquals("Test failed", true, false);
+                    waitExep[0] = true;
                 }
                 super.tickSystem();
             }
@@ -293,15 +335,29 @@ public class GPUTest extends GPU{
         gpuThread.start();
         tickThread.start();
 
+        // Wait enough time
         try {
             Thread.sleep(1000);
         } catch (Exception e) {
-            assertEquals("Test failed", true, false);
+            assertEquals("sleep failed", true, false);
         }
 
-        cpuThread.interrupt();
-        gpuThread.interrupt();
-        tickThread.interrupt();
+        if(waitExep[0] == true || waitExep[1] == true) {
+            try {
+                cpuThread.join();
+                gpuThread.join();
+                tickThread.join();
+            } catch (Exception e) {
+                assertEquals("sleep failed", true, false);
+            }
+            assertTrue("waiting machanizem failed", false);
+        } else {
+            cpuThread.interrupt();
+            gpuThread.interrupt();
+            tickThread.interrupt();
+        }
+
+
 
         assertEquals("Test failed", 5000, super.getNumOfTrainedBatches());
 

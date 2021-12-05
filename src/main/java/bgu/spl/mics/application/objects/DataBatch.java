@@ -62,5 +62,15 @@ public class DataBatch {
 
     public void setAsProcessed() {
         this.doneProcessing = true;
+        this.data.batchProcessed();
+    }
+
+    public void setAsTrained() {
+        this.doneProcessing = true;
+        this.data.batchTrained();
+    }
+
+    public GPU getGPU() {
+        return this.gpu;
     }
 }

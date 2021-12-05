@@ -15,9 +15,13 @@ public class CPU {
     Queue<DataBatch> batches; // Max 2 batches at the same time in this CPU.
     // Container<DataBatch> datsa;
 
+    // Internal use.
+    boolean isProcessing;
+    int processingCnt;
+
     // Statistics.
     private long nOfProcessedBatches;
-    private long nOfTimePass;
+    private long nOfTimeUsed;
 
 
     // public CPU(CPU other) {
@@ -56,21 +60,32 @@ public class CPU {
      * @return this.nCores
      * 
      * @pre none
-     * @post none.
+     * @post trivial.
      */
     public int getNumOfCores() {
         return this.nCores;
     }
 
     /**
-     * Return number of ticks happends.
-     * @return this.nOfTimePass
+     * Return number of cores
+     * @return this.isProcessing
      * 
      * @pre none
-     * @post none
+     * @post trivial.
      */
-    public long getNumOfTimePass() {
-        return this.nOfTimePass;
+    public int isProcessing() {
+        return this.isProcessing();
+    }
+
+    /**
+     * Return number of ticks happends.
+     * @return this.nOfTimeUsed
+     * 
+     * @pre none
+     * @post trivial
+     */
+    public long getNumOfTimeUsed() {
+        return this.nOfTimeUsed;
     }
 
     /**
@@ -78,7 +93,7 @@ public class CPU {
      * @return this.nOfProcessedBatches.
      * 
      * @pre none.
-     * @post {@return} = this.nOfProcessedBatches
+     * @post trivial
      */
     public long getNumOfProcessedBatches() {
         return this.nOfProcessedBatches;
@@ -106,7 +121,7 @@ public class CPU {
      * @return DataBatch
      * 
      * @pre none
-     * @post if this.cluster.hasBatchToProcess then {@return} != null else {@return} = nul.
+     * @post if this.cluster.hasBatchToProcess then {@return} != null else {@return} = null.
      */
     protected DataBatch tryToFetchBatch() {
         return null;
@@ -114,14 +129,33 @@ public class CPU {
 
     /**
      * This function is a placeholder function. 
-     * It gets a {@type DataBatch} as param and starts process it.
+     * It gets a {@type DataBatch} as param and starts processing it.
      * This function actually do nothing but it illustrait that processing is taking care of.
      * @param data
      * 
      * @pre {@param v} != null
-     * @post TODO 
+     *  &&  this.isProcessing() = false
+     * @post resets this.processingCnt. 
      */
     protected void StartProcessingBatch(DataBatch batch) throws IllegalArgumentException{
+
+        // TODO checks
+
+        // this.isProcessing = true;
+        // this.processingCnt = 0;
+    }
+
+    
+    /**
+     * This function gets a {@type DataBatch} as param and checks if processing is done.
+     * @param data
+     * 
+     * @pre {@param v} != null
+     * @post {@return} = (this.processingCnt == this.numOfTickToProcess(batch));
+. 
+     */
+    protected boolean isDoneProcessing(DataBatch batch) {
+        return this.processingCnt == this.numOfTickToProcess(batch.getType());
     }
 
     /**
@@ -133,8 +167,10 @@ public class CPU {
      * @param batch
      * 
      * @pre {@param batch} !- null
-     *  &&  {@param batch.getIsProcessed()} = true 
-     * @post @post(this.getNumOfProcessedBatches()) = @pre(this.getNumOfProcessedBatches())
+     *  &&  {@param batch.getIsProcessed()} = false
+     *  &&  this.isProcessing() = false
+     * @post @post(this.getNumOfProcessedBatches()) = 1 +@pre(this.getNumOfProcessedBatches())
+     *  &&  {@param batch.getIsProcessed()} = true
      */
     protected void finalizeProcessBatch(DataBatch batch) throws IllegalArgumentException {
     }
@@ -147,11 +183,10 @@ public class CPU {
      * 
      * @pre {@param batch} !- null
      *  &&  {@param batch.getIsProcessed()} = true 
-     * @post none
+     * @post this.cluster.getNumOfProcessedBatch = 1 + @pre(this.cluster.getNumOfProcessedBatch)
      */
     protected void sendProcessedBatch(DataBatch batch) throws IllegalArgumentException {
     }
-
 
     /**
      * This function ticks the CPU:

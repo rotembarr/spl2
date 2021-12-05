@@ -26,7 +26,9 @@ public class Future<T> {
      * not been completed.
      * <p>
      * @return return the result of type T if it is available, if not wait until it is available.
-     * 	       
+	 * 
+	 * @pre none
+	 * @post {@return} = this.returnObj.
      */
 	public T get() {
 		//TODO: implement this.
@@ -35,6 +37,9 @@ public class Future<T> {
 	
 	/**
      * Resolves the result of this Future object.
+	 * 
+	 * @pre this.isDone() = false
+	 * @post if (!this.isDone()) this.get() = {@param result}
      */
 	public void resolve (T result) {
 		//TODO: implement this.
@@ -64,8 +69,9 @@ public class Future<T> {
 	 * @inv @param(timout) >= 0
 	 *  &&  return = this.returnVal
 	 *  &&  @post(System.CurrentTime) <= @pre(System.CurrentTime) + timout*unit.
+	 * 
 	 * @pre none
-	 * @post none
+	 * @post {@return} = this.returnObj.
      */
 	public T get(long timeout, TimeUnit unit) {
 		//TODO: implement this.

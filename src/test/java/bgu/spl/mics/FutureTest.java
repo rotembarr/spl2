@@ -3,9 +3,7 @@ package bgu.spl.mics;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.experimental.theories.Theories;
 
-import javax.swing.event.MouseInputListener;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
@@ -32,57 +30,69 @@ public class FutureTest {
 
     @Test
     public void testResolve() {
-        future.resolve("The future is resolve");
+        String ans = "The future is resolve";
+        String badAns = "bla bla";
+        future.resolve(ans);
         assertTrue(future.isDone());
+        assertEquals(ans, future.get());
 
+        // Resolve again and see whats happend. 
+        future.resolve(badAns);
+        assertTrue(future.isDone());
+        assertEquals(ans, future.get());
     }
 
 
     @Test
     public void testGet() throws InterruptedException {
+        String ans = "The future is resolve";
+        String[] ret = {null};
         Thread resolve = new Thread(() -> {
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            future.resolve("The future is resolve");
+            future.resolve(ans);
         });
         Thread get = new Thread(() -> {
-            assertEquals("The future is resolve", future.get());
-            try {
-                Thread.currentThread().join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            ret[0] = future.get();
         });
+
         resolve.start();
         get.start();
-
+        get.join();
+        assertEquals(ans, ret[0]);
     }
 
 
     @Test
     public void testGetWithTimeOut() {
+        String ans = "The future is resolve";
+        final String[] ret = {null,null};
         Thread resolve = new Thread(() -> {
             try {
-                Thread.sleep(500);
+                Thread.sleep(50);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                assertTrue("Test failed - sleep exception", false);
             }
-            future.resolve("The future is resolve");
+            future.resolve(ans);
         });
         Thread get = new Thread(() -> {
-            assertNull("The future is resolve", future.get(100, TimeUnit.MILLISECONDS));
-            assertEquals("The future is resolve", future.get(600, TimeUnit.MILLISECONDS));
-            try {
-                Thread.currentThread().join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            ret[0] = future.get(10, TimeUnit.MILLISECONDS);
+            ret[1] = future.get(60, TimeUnit.MILLISECONDS);
         });
         resolve.start();
         get.start();
+        
+        try {
+            get.join();
+        } catch (InterruptedException e) {
+            assertTrue("Test failed - thread join exception", false);
+        }
+
+        assertNull("The future is resolve", ret[0]);
+        assertEquals("The future is resolve", ret[1]);
 
     }
 }

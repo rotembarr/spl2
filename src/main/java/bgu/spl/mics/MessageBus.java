@@ -43,6 +43,10 @@ public interface MessageBus {
      * @param <T>    The type of the result expected by the completed event.
      * @param e      The completed event.
      * @param result The resolved result of the completed event.
+     * 
+     * @pre none 
+     * @post if {@code e} = null or !this.hashMap.find({@code e}) - do nothing, 
+     *  else - resolve linked future
      */
     <T> void complete(Event<T> e, T result);
 
@@ -51,6 +55,10 @@ public interface MessageBus {
      * micro-services subscribed to {@code b.getClass()}.
      * <p>
      * @param b 	The message to added to the queues.
+     * 
+     * @pre none 
+     * @post if {@code b} = null - do nothing, 
+     *  else - send the broadcast to all the suscriber.
      */
     void sendBroadcast(Broadcast b);
 
@@ -63,6 +71,10 @@ public interface MessageBus {
      * @param e     	The event to add to the queue.
      * @return {@link Future<T>} object to be resolved once the processing is complete,
      * 	       null in case no micro-service has subscribed to {@code e.getClass()}.
+     * 
+     * @pre none 
+     * @post if {@code b} = null - do nothing, 
+     *  else - send the broadcast to all the suscriber.     * 
      */
     <T> Future<T> sendEvent(Event<T> e);
 
@@ -97,6 +109,9 @@ public interface MessageBus {
      * @return The next message in the {@code m}'s queue (blocking).
      * @throws InterruptedException if interrupted while waiting for a message
      *                              to became available.
+     * 
+     * @pre as described above, this function throws exception if {@param m} isn't valid.
+     * @post return the first message that inserted {@param m}'s queue.
      */
     Message awaitMessage(MicroService m) throws InterruptedException;
     

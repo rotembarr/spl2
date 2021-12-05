@@ -1,9 +1,6 @@
 package bgu.spl.mics.application.objects;
 
-import java.util.Collection;
 import java.util.Queue;
-
-import bgu.spl.mics.application.objects.Model.Result;
 
 /**
  * Passive object representing a single GPU.
@@ -59,12 +56,23 @@ public class GPU {
      * @return this.nOfTimePass
      * 
      * @pre none
-     * @post none
+     * @post trivial
      */
     public long getNumOfTimePass() {
         return this.nOfTimePass;
     }
 
+    
+    /**
+     * Return if GPU trains.
+     * @return this.isTraining
+     * 
+     * @pre none
+     * @post trivial
+     */
+    public boolean isTraining() {
+        return this.isTraining;
+    }
     
     /**
      * Return number of trained batches.
@@ -149,8 +157,7 @@ public class GPU {
      * 
      * @pre {@param batch} != null
      *  && {@param batch.isDoneProcessing()} = false.
-     *  && {this.getModelsQueueSize() > 0}
-     * @post
+     * @post this.cluster.getNumOfBatchesWaitingToProcess = 1 + @pre(getNumOfBatchesWaitingToProcess)
      */    
     protected void sendBatchToProcess(DataBatch batch) throws IllegalArgumentException{
     }
@@ -184,6 +191,7 @@ public class GPU {
      * @pre none
      * @post if we can fetch, {@return} = @pre(cluster.getProcessedBatch())
      *       else, {@return} = null.
+     *  && {@return}.getGPU() = this.
      */
     protected DataBatch tryToFetchProcessedBatch() {
         // if (this.processedbatches.size() >= 32)
@@ -198,11 +206,12 @@ public class GPU {
      * @param batch
      * 
      * @pre {@param batch} != null
-     *  && {@param batch.getDoneProcessing()} = true.
+     *  && {@param batch.isDoneProcessing()} = true.
+     *  && {@param batch.getGPU()} = this.
      *  && this.isTraining = false
      * @post @post(this.getTraining) = 0.
      */
-    protected void startTrainBatch(DataBatch batch) {
+    protected void startTrainBatch(DataBatch batch) throws IllegalArgumentException {
     }
 
     /**
@@ -222,11 +231,15 @@ public class GPU {
      * It reset this.trainingCnt and resets this.isTraining.
      * @param batch
      * 
-     *  @pre {@param batch} != null
-     *  && {@param batch.getDoneProcessing()} = true.
+     * @pre {@param batch} != null
+     *  && {@param batch.isDoneProcessing()} = true.
+     *  && {@param batch.isDoneTrainig()} = false.
+     *  && {@param batch.getGPU()} = this.
+     *  && this.isTraining = true
+     * @post {@param batch}.isDoneTraining() = true
      *  && this.isTraining = false
      */
-    protected void finalizeTrainBatch(DataBatch batch) {
+    protected void finalizeTrainBatch(DataBatch batch) throws IllegalArgumentException {
     }
 
     /**
