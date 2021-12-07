@@ -13,11 +13,18 @@ import java.util.concurrent.TimeUnit;
 public class Future<T> {
 	boolean done;
 	T returnObj;
+
+	// Lock machanizem.
+	Object lock;
+
 	/**
 	 * This should be the the only public constructor in this class.
 	 */
 	public Future() {
 		//TODO: implement this
+		this.done = false;
+		this.returnObj = null;
+		this.lock = new Object();
 	}
 	
 	/**
@@ -31,8 +38,17 @@ public class Future<T> {
 	 * @post {@return} = this.returnObj.
      */
 	public T get() {
-		//TODO: implement this.
-		return null;
+		if (!this.isDone()) {
+			try {
+				synchronized (lock) {
+					this.lock.wait();
+				}
+			} catch (Exception e) {
+				e.printStackTrace(); // TODO
+			}
+		}
+			
+		return this.returnObj;
 	}
 	
 	/**
@@ -42,7 +58,13 @@ public class Future<T> {
 	 * @post if (!this.isDone()) this.get() = {@param result}
      */
 	public void resolve (T result) {
-		//TODO: implement this.
+		if (!this.isDone()) {
+			this.returnObj = result;
+		}
+		this.done = true;
+        synchronized (lock) {
+			this.lock.notify();
+		}
 	}
 	
 	/**
@@ -51,8 +73,7 @@ public class Future<T> {
 	 * @post @pre(this.done) = @post(this.done)
      */
 	public boolean isDone() {
-		//TODO: implement this.
-		return false;
+		return this.done;
 	}
 	
 	/**
@@ -66,16 +87,24 @@ public class Future<T> {
      * 	       wait for {@code timeout} TimeUnits {@code unit}. If time has
      *         elapsed, return null.
 	 * 
-	 * @inv @param(timout) >= 0
-	 *  &&  return = this.returnVal
-	 *  &&  @post(System.CurrentTime) <= @pre(System.CurrentTime) + timout*unit.
-	 * 
 	 * @pre none
 	 * @post {@return} = this.returnObj.
      */
 	public T get(long timeout, TimeUnit unit) {
-		//TODO: implement this.
-		return null;
+		long waitTime = TimeUnit.MILLISECONDS.convert(timeout, unit);
+
+		if (!this.isDone()) {
+			System.out.println("aaa");
+			try {
+				synchronized (lock) {
+					this.lock.wait(waitTime);
+				}
+			} catch (Exception e) {
+				e.printStackTrace(); // TODO
+			}
+		}
+
+		return this.returnObj;		
 	}
 
 }

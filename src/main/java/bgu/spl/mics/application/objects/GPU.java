@@ -45,7 +45,7 @@ public class GPU {
      * @return copy of this.modelNames
      * 
      * @pre none
-     * @post {@result} != this.modelNames.
+     * @post {@result} = this.modelNames.
      */
     public Queue<String> getModelNames() {
         return null;
@@ -164,7 +164,7 @@ public class GPU {
         
     /**
      * This is a non-blocking function.
-     * It creates and sends the 'cluster' batches for processing.
+     * It creates and sends batches to the 'cluster' for processing by the CPUs.
      * It does all the calculation according to:
      * 1. How many batches already sent and havn't recieved.
      * 2. How many batches are waiting to be train in this GPU.
@@ -189,7 +189,7 @@ public class GPU {
      * @return Fetched batch. If no batch fetched, return null.
      * 
      * @pre none
-     * @post if we can fetch, {@return} = @pre(cluster.getProcessedBatch())
+     * @post if we can fetch, {@return} = @pre(cluster.getProcessedBatch(this))
      *       else, {@return} = null.
      *  && {@return}.getGPU() = this.
      */
@@ -209,7 +209,8 @@ public class GPU {
      *  && {@param batch.isDoneProcessing()} = true.
      *  && {@param batch.getGPU()} = this.
      *  && this.isTraining = false
-     * @post @post(this.getTraining) = 0.
+     * @post @post(this.isTraining) = true.
+     *  &&   @post(this.trainingCnt) = 0.
      */
     protected void startTrainBatch(DataBatch batch) throws IllegalArgumentException {
     }

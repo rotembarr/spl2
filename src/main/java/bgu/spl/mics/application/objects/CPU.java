@@ -10,7 +10,7 @@ import java.util.Queue;
 public class CPU {
     final static int DEFAULT_NUM_OF_CORES = 4;
 
-    private int nCores; // Number of cores.
+    private int nCores; // Number of cores. can be {1,2,4,8,16,32} by defenition.
     private Cluster cluster; // A pointer to the singletone cluster.
     Queue<DataBatch> batches; // Max 2 batches at the same time in this CPU.
     // Container<DataBatch> datsa;
@@ -67,7 +67,7 @@ public class CPU {
     }
 
     /**
-     * Return number of cores
+     * Return if we are currentky proessing a batch.
      * @return this.isProcessing
      * 
      * @pre none
@@ -151,8 +151,7 @@ public class CPU {
      * @param data
      * 
      * @pre {@param v} != null
-     * @post {@return} = (this.processingCnt == this.numOfTickToProcess(batch));
-. 
+     * @post {@return} = (this.processingCnt == this.numOfTickToProcess(batch.getType())).
      */
     protected boolean isDoneProcessing(DataBatch batch) {
         return this.processingCnt == this.numOfTickToProcess(batch.getType());
@@ -190,12 +189,13 @@ public class CPU {
 
     /**
      * This function ticks the CPU:
-     * It checks if a batch done processing. 
+     * Advance tick counter, and processingCnt;
+     * It checks if a batch done processing.
      * If so:
-     * 1. It sends it back to the GPU
+     * 1. It sends it back to the GPU.
      * 2. It tries to fetch new batches to process (max of 2 batches at the same time in the CPU).
-     * 3. Start process a new batch.
-     * If not: just advance internal counter.
+     * 3. If there is a batch to process, it starts a new batch processing.
+     * If not: Do nothing.
      * @pre none
      * @post all of the above
      */

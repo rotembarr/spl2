@@ -25,13 +25,13 @@ public class FutureTest {
         assertFalse(future.isDone());
         future.resolve("The future is resolve");
         assertTrue(future.isDone());
-
     }
 
     @Test
     public void testResolve() {
         String ans = "The future is resolve";
         String badAns = "bla bla";
+
         future.resolve(ans);
         assertTrue(future.isDone());
         assertEquals(ans, future.get());
