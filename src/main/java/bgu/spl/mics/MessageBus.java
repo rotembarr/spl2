@@ -18,8 +18,6 @@ public interface MessageBus {
      * @param type The type to subscribe to,
      * @param m    The subscribing micro-service.
      * 
-     * @pre this.isRegister({@param m}) = true
-     * @post @post(this.isSubscribedEvent({@param type}, {@param m})) = true 
      */
     <T> void subscribeEvent(Class<? extends Event<T>> type, MicroService m);
 
@@ -29,8 +27,6 @@ public interface MessageBus {
      * @param type 	The type to subscribe to.
      * @param m    	The subscribing micro-service.
      * 
-     * @pre this.isRegister({@param m}) = true
-     * @post @post(this.isSubscribedBroadcast({@param type}, {@param m})) = true 
      */
     void subscribeBroadcast(Class<? extends Broadcast> type, MicroService m);
 
@@ -44,9 +40,6 @@ public interface MessageBus {
      * @param e      The completed event.
      * @param result The resolved result of the completed event.
      * 
-     * @pre none 
-     * @post if {@code e} = null or !this.hashMap.find({@code e}) - do nothing, 
-     *  else - resolve linked future
      */
     <T> void complete(Event<T> e, T result);
 

@@ -17,6 +17,12 @@ import java.util.List;
 public class MessageBusTest extends MessageBusImpl {
 
     @Test
+    public void aaa() {
+        Event<String> a = new ExampleEvent("aaa");
+        // Event<Object> b = (Event<Object>)a;
+    }
+
+    @Test
     public void TestsubscribeBroadcast_Base() {
         String[] stringTest={"10"};
 
