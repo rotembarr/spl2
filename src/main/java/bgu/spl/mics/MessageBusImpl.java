@@ -1,13 +1,16 @@
 package bgu.spl.mics;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-
-import bgu.spl.mics.example.messages.ExampleBroadcast;
 
 /**
  * The {@link MessageBusImpl class is the implementation of the MessageBus interface.
@@ -16,14 +19,23 @@ import bgu.spl.mics.example.messages.ExampleBroadcast;
  */
 public class MessageBusImpl implements MessageBus {
 
+	private static class SingletoneHolder {
+		private static MessageBusImpl instance = new MessageBusImpl();
+	}
+
 	// Local Variables.
 	static MessageBusImpl messageBus = null;
-	Map<MicroService, List<Class<? extends Message>>> serviceToMesssageMap;
-	Map<Class<? extends Message>, List<MicroService>> broadcastToServiceMap;
-	// Map<Class<? extends Message>, Pair<Integer, List<MicroService>>> eventToServiceMap;
-	Map<MicroService, BlockingQueue<Message>> serviceToQueueMap;
-	Map<Event<?>, Future<?>> eventToFutureMap;
 
+	// Registration Handling.
+	Map<MicroService, List<Class<? extends Message>>> serviceToMesssageMap;
+	Map<MicroService, BlockingQueue<Message>> serviceToQueueMap;
+	
+	// Future Handling.
+	Map<Event<?>, Future<?>> eventToFutureMap;
+	
+	// Sending Handling.
+	Map<Class<? extends Message>, Pair<Integer, List<MicroService>>> eventToServiceMap;
+	Map<Class<? extends Message>, List<MicroService>> broadcastToServiceMap;
 
 	/**
 	 * Sole constructor.
@@ -33,6 +45,9 @@ public class MessageBusImpl implements MessageBus {
 		this.serviceToMesssageMap = new HashMap<MicroService, List<Class<? extends Message>> >();
 		this.serviceToQueueMap = new HashMap<MicroService, BlockingQueue<Message>>();
 		this.eventToFutureMap = new HashMap<Event<?>, Future<?>>();
+
+		this.eventToServiceMap = new HashMap<Class<? extends Message>, Pair<Integer, List<MicroService>>> ();
+		this.broadcastToServiceMap = new HashMap<Class<? extends Message>, List<MicroService>> ();
 	}
 
     /**
@@ -42,10 +57,7 @@ public class MessageBusImpl implements MessageBus {
      *  &&   @result = @post(getInstance) 
      */
     public static MessageBusImpl getInstance() {
-		if (messageBus == null) {
-			messageBus = new MessageBusImpl();
-		}
-		return messageBus;
+		return SingletoneHolder.instance;
 	}
 
 
@@ -104,7 +116,8 @@ public class MessageBusImpl implements MessageBus {
 
 		// Second, check if type is register
 		List< Class<? extends Message> > types = this.serviceToMesssageMap.get(m);
-		return types.contains(type);	}
+		return types.contains(type);	
+	}
    
 	/**
      * @pre this.isRegister({@param m}) = true
@@ -118,8 +131,18 @@ public class MessageBusImpl implements MessageBus {
 		}
 
 		// If he service register - add type param
-		List< Class<? extends Message> > types = this.serviceToMesssageMap.get(m);
+		List<Class<? extends Message> > types = this.serviceToMesssageMap.get(m);
 		types.add(type);
+
+
+		Pair<Integer, List<MicroService>> entry = null;
+		if (this.eventToServiceMap.containsKey(type)) {
+			entry = this.eventToServiceMap.get(type);
+		} else {
+			entry = new Pair<Integer, List<MicroService>>(0, new LinkedList<MicroService>());
+			this.eventToServiceMap.put(type, entry);
+		}
+		entry.getSecond().add(m);
 	}
 
 	/**
@@ -137,6 +160,14 @@ public class MessageBusImpl implements MessageBus {
 		List< Class<? extends Message> > types = this.serviceToMesssageMap.get(m);
 		types.add(type);
 
+		List<MicroService> list = null;
+		if (this.broadcastToServiceMap.containsKey(type)) {
+			list = this.broadcastToServiceMap.get(type);
+		} else {
+			list = new LinkedList<MicroService>();
+			broadcastToServiceMap.put(type, list);
+		}
+		list.add(m);
 	}
 
 	/**
@@ -165,11 +196,19 @@ public class MessageBusImpl implements MessageBus {
 	 */
 	@Override
 	public synchronized void sendBroadcast(Broadcast b) {
-		// TODO Auto-generated method stub
 		if (b == null) {
 			return;
 		} // TODO
 
+		if (!this.broadcastToServiceMap.containsKey(b.getClass())) {
+			return;
+		}
+
+		List<MicroService> list = this.broadcastToServiceMap.get(b.getClass());
+		for (Iterator<MicroService> iter = list.iterator(); iter.hasNext();) {
+			MicroService microService = iter.next();
+			this.serviceToQueueMap.get(microService).add(b);
+		}
 	}
 
 	/**	
@@ -182,8 +221,22 @@ public class MessageBusImpl implements MessageBus {
 			return null;
 		} // TODO
 
+
+		if (!this.eventToServiceMap.containsKey(e.getClass())) {
+			return null;
+		} // TODO
+
+		// Create future.
 		Future<T> future = new Future<T>();
 		this.eventToFutureMap.put(e, future);
+		
+		// Send the event to one of the queues and advance round robbin counter.
+		Pair<Integer, List<MicroService>> pair = this.eventToServiceMap.get(e.getClass());
+		MicroService microService =  pair.getSecond().get(pair.getFirst());
+		this.serviceToQueueMap.get(microService).add(e);
+		Integer cnt = pair.getFirst();
+		pair.setFirst((cnt + 1)%pair.getSecond().size());
+
 		return future;
 	}
 
@@ -219,17 +272,52 @@ public class MessageBusImpl implements MessageBus {
 		// Unregistration.
 		this.serviceToMesssageMap.remove(m);
 		this.serviceToQueueMap.remove(m);
+
+
+		// Remove m's futures.
+		Set<Event<?>> eventSet = eventToFutureMap.keySet();
+		for (Iterator<Event<?>> iter = eventSet.iterator(); iter.hasNext();) {
+			Event<?> event = iter.next();
+			// TODO - need to delete.
+		}
+
+		// Remove m's events subsribtion.
+		Collection<Pair<Integer, List<MicroService>>> allEventsMicroServices = this.eventToServiceMap.values();
+		for (Iterator<Pair<Integer, List<MicroService>>> iter = allEventsMicroServices.iterator(); iter.hasNext();) {
+			Pair<Integer, List<MicroService>> pair = iter.next();
+
+			List<MicroService> list = pair.getSecond();
+			if (list.contains(m)) {
+				int index = list.indexOf(m);
+				
+				// Update round robbin counter
+				if (pair.getFirst() > index) {
+					pair.setFirst(pair.getFirst() - 1); // Note that cnt > 0 so its fine just to sub.
+				}
+
+				// Remove from list.
+				list.remove(index);
+			}
+		}
+
+		// Remove m's broadcast subsribtion.
+		Collection<List<MicroService>> allBroadcastsMicroServices = this.broadcastToServiceMap.values();
+		for (Iterator<List<MicroService>> iter = allBroadcastsMicroServices.iterator(); iter.hasNext();) {
+			List<MicroService> list = iter.next();
+			list.remove(m); // Remove from list (if exists).
+		}
 	}
 
 	@Override
 	public Message awaitMessage(MicroService m) throws InterruptedException {
-		if (!this.isRegister(m)) {
+
+		if (m == null || !this.isRegister(m)) {
 			throw new InterruptedException();
 		}
 
 		// Poll message.
 		BlockingQueue<Message> queue = this.serviceToQueueMap.get(m);
-		return queue.poll();
+		return queue.take();
 	}
 	
 

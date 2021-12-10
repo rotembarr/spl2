@@ -1,15 +1,10 @@
 import static org.junit.Assert.assertTrue;
 
-import org.junit.Before;
 import org.junit.Test;
 
-import bgu.spl.mics.Broadcast;
 import bgu.spl.mics.Callback;
-import bgu.spl.mics.Message;
-import bgu.spl.mics.MessageBus;
 import bgu.spl.mics.MessageBusImpl;
 import bgu.spl.mics.MicroService;
-import bgu.spl.mics.example.ExampleMicroService;
 import bgu.spl.mics.example.messages.ExampleBroadcast;
 import bgu.spl.mics.example.messages.ExampleBroadcast2;
 import bgu.spl.mics.example.messages.ExampleEvent;
@@ -28,6 +23,12 @@ public class MicroServiceTest extends MicroService{
         this.messageBus.register(this);
         assertTrue("Couldnt subscribe event", this.messageBus.isRegister(this));
         
+    }
+
+
+    @Test
+    public void testSanity() {
+        System.out.println("sss");
     }
 
     @Test

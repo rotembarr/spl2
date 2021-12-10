@@ -1,5 +1,6 @@
 package bgu.spl.mics;
 
+import bgu.spl.mics.example.ExampleMicroService;
 import bgu.spl.mics.example.messages.ExampleBroadcast;
 import bgu.spl.mics.example.messages.ExampleBroadcast2;
 import bgu.spl.mics.example.messages.ExampleEvent;
@@ -15,12 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MessageBusTest extends MessageBusImpl {
-
-    @Test
-    public void aaa() {
-        Event<String> a = new ExampleEvent("aaa");
-        // Event<Object> b = (Event<Object>)a;
-    }
 
     @Test
     public void TestsubscribeBroadcast_Base() {
@@ -220,6 +215,10 @@ public class MessageBusTest extends MessageBusImpl {
         // Try to complete null event - its just shouldnt crash.
         super.complete(null, null);
         
+        ExampleMicroService m = new ExampleMicroService("m");
+        super.register(m);
+        super.subscribeEvent(ExampleEvent.class, m);
+
         // Try to complete non existing event - its just shouldnt crash.
         super.complete(new ExampleEvent("morosh"), null);
 
@@ -424,7 +423,7 @@ public class MessageBusTest extends MessageBusImpl {
 
     @Test
     public void TestAwaitMessage_NullArguent() {
-        assertThrows(IllegalStateException.class, ()->{
+        assertThrows(InterruptedException.class, ()->{
             super.awaitMessage(null);
         });
     }
@@ -432,7 +431,7 @@ public class MessageBusTest extends MessageBusImpl {
 
     @Test
     public void TestAwaitMessage_UnregisterService() {
-        assertThrows(IllegalStateException.class, ()->{
+        assertThrows(InterruptedException.class, ()->{
             String[] args = {"10"};
             super.awaitMessage(new ExampleBroadcastListenerService("mor",args));
         });
