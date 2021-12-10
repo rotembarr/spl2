@@ -1,5 +1,6 @@
 package bgu.spl.mics.application.objects;
 
+import java.util.ArrayDeque;
 import java.util.Queue;
 
 /**
@@ -11,9 +12,9 @@ public class CPU {
     final static int DEFAULT_NUM_OF_CORES = 4;
 
     private int nCores; // Number of cores. can be {1,2,4,8,16,32} by defenition.
+    private int n32DivCores; // 32/this.nCore.
     private Cluster cluster; // A pointer to the singletone cluster.
-    Queue<DataBatch> batches; // Max 2 batches at the same time in this CPU.
-    // Container<DataBatch> datsa;
+    Queue<DataBatch> batchesQueue; // Max 2 batches at the same time in this CPU.
 
     // Internal use.
     boolean isProcessing;
@@ -39,10 +40,15 @@ public class CPU {
      */
     public CPU() {
         this.nCores = CPU.DEFAULT_NUM_OF_CORES;
-        this.cluster = null;
-        this.batches = null;
+        this.n32DivCores = 32/nCores;
+        this.cluster = Cluster.getInstance();
+        this.batchesQueue = new ArrayDeque<DataBatch>();
+        this.isProcessing = false;
+        this.processingCnt = 0;
+        this.nOfProcessedBatches = 0;
+        this.nOfTimeUsed = 0;
     }
-
+    
     /**
      * Constructor.
      * @param nCores
@@ -51,8 +57,13 @@ public class CPU {
      */
     public CPU(int nCores) {
         this.nCores = nCores;
-        this.cluster = null;
-        this.batches = null;
+        this.n32DivCores = 32/nCores;
+        this.cluster = Cluster.getInstance();
+        this.batchesQueue = new ArrayDeque<DataBatch>();
+        this.isProcessing = false;
+        this.processingCnt = 0;
+        this.nOfProcessedBatches = 0;
+        this.nOfTimeUsed = 0;
     }
 
     /**
@@ -73,8 +84,8 @@ public class CPU {
      * @pre none
      * @post trivial.
      */
-    public int isProcessing() {
-        return this.isProcessing();
+    public boolean isProcessing() {
+        return this.isProcessing;
     }
 
     /**
@@ -111,7 +122,13 @@ public class CPU {
      * @post {@return} != 0
      */
     private int numOfTickToProcess(Data.Type type) {
-        return 0;
+        if (type == Data.Type.Images) {
+            return (n32DivCores*4);
+        } else if (type == Data.Type.Text) {
+            return (n32DivCores*2);
+        } else {
+            return (n32DivCores*1);
+        }
     }
 
     /**
@@ -124,7 +141,9 @@ public class CPU {
      * @post if this.cluster.hasBatchToProcess then {@return} != null else {@return} = null.
      */
     protected DataBatch tryToFetchBatch() {
-        return null;
+        DataBatch batch = this.cluster.popBatchToProcess();
+        return batch;
+        // return this.cluster.popBatchToProcess();
     }
 
     /**
@@ -133,16 +152,17 @@ public class CPU {
      * This function actually do nothing but it illustrait that processing is taking care of.
      * @param data
      * 
-     * @pre {@param v} != null
+     * @pre {@param batch} != null
      *  &&  this.isProcessing() = false
      * @post resets this.processingCnt. 
      */
     protected void StartProcessingBatch(DataBatch batch) throws IllegalArgumentException{
+        if (batch == null || batch.isDoneProcessing() | this.isProcessing() ) {
+            throw new IllegalArgumentException();
+        }
 
-        // TODO checks
-
-        // this.isProcessing = true;
-        // this.processingCnt = 0;
+        this.processingCnt = 0;
+        this.isProcessing = true;
     }
 
     
@@ -154,6 +174,7 @@ public class CPU {
      * @post {@return} = (this.processingCnt == this.numOfTickToProcess(batch.getType())).
      */
     protected boolean isDoneProcessing(DataBatch batch) {
+        int a = this.numOfTickToProcess(batch.getType());
         return this.processingCnt == this.numOfTickToProcess(batch.getType());
     }
 
@@ -172,6 +193,13 @@ public class CPU {
      *  &&  {@param batch.getIsProcessed()} = true
      */
     protected void finalizeProcessBatch(DataBatch batch) throws IllegalArgumentException {
+        if (!this.isProcessing() | batch == null || batch.isDoneProcessing()) {
+            throw new IllegalArgumentException();
+        }
+
+        batch.setAsProcessed();
+        this.nOfProcessedBatches++;
+        this.isProcessing = false;
     }
     
     /**
@@ -185,6 +213,11 @@ public class CPU {
      * @post this.cluster.getNumOfProcessedBatch = 1 + @pre(this.cluster.getNumOfProcessedBatch)
      */
     protected void sendProcessedBatch(DataBatch batch) throws IllegalArgumentException {
+        if (batch == null || !batch.isDoneProcessing()) {
+            throw new IllegalArgumentException();
+        }
+
+        this.cluster.pushProcessedBatch(batch);
     }
 
     /**
@@ -200,6 +233,34 @@ public class CPU {
      * @post all of the above
      */
     public void tickSystem() {
+        this.nOfTimeUsed++;
+        this.processingCnt++;
+
+        try {
+
+            // Done processing.
+            if (this.batchesQueue.size() > 0 && this.isDoneProcessing(this.batchesQueue.peek())) {
+                this.finalizeProcessBatch(this.batchesQueue.peek());
+                this.sendProcessedBatch(this.batchesQueue.poll());
+            }
+
+            // Poll new batches.
+            DataBatch batch = null;
+            while (this.batchesQueue.size() < 2 && ((batch = this.tryToFetchBatch()) != null)) {
+                if (batch.getGPU() == null || batch.getData() == null) {
+                    throw new IllegalCallerException();
+                } else {
+                    this.batchesQueue.add(batch);    
+                }
+            }
+
+            // Start new processing.
+            if (!this.isProcessing() & this.batchesQueue.size() > 0) {
+                this.StartProcessingBatch(this.batchesQueue.peek());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 }

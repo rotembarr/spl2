@@ -6,14 +6,14 @@ package bgu.spl.mics.application.objects;
  */
 
 public class DataBatch {
-    Data data; // The data tha batch belongs to
-    int startIndex; // The index of the first sample in the batch
-    int size;
-    GPU gpu; // The origin GPU that sent the batch. 
+    private Data data; // The data tha batch belongs to
+    private int startIndex; // The index of the first sample in the batch
+    private int size;
+    private GPU gpu; // The origin GPU that sent the batch. 
 
     // Statistics.
-    boolean doneProcessing;    
-    boolean doneTraining;    
+    private boolean doneProcessing;    
+    private boolean doneTraining;    
 
     public DataBatch(GPU gpu, Data data, int startIndex) {
         this.data = data;
@@ -37,12 +37,24 @@ public class DataBatch {
     }
 
 
+
+    /**
+     * Returns starting index;
+     * @return this.startIndex.
+     * 
+     * @pre none
+     * @post trivial
+     */
+    public int getStartIndex() {
+        return this.startIndex;
+    }
+
     /**
      * Returns if the batch has processed;
      * @return this.doneProcessing.
      * 
      * @pre none
-     * @post none
+     * @post trivial
      */
     public boolean isDoneProcessing() {
         return this.doneProcessing;
@@ -54,7 +66,7 @@ public class DataBatch {
      * @return this.doneProcessing.
      * 
      * @pre none
-     * @post none
+     * @post trivial
      */
     public boolean isDoneTraining() {
         return this.doneTraining;
@@ -72,5 +84,9 @@ public class DataBatch {
 
     public GPU getGPU() {
         return this.gpu;
+    }
+
+    public Data getData() {
+        return this.data;
     }
 }

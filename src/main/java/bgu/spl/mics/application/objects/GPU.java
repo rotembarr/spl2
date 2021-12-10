@@ -8,6 +8,7 @@ import java.util.Queue;
  * Add fields and methods to this class as you see fit (including public methods and constructors).
  */
 public class GPU {
+    final static int MAX_PROCESSED_DATA_BATCH_STORED = 32;
     /**
      * Enum representing the type of the GPU.
      */

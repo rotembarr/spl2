@@ -11,6 +11,7 @@ public class Data {
         Images, Text, Tabular
     }
 
+    private String name;
     private Type type; // Type of the data.
     private int dataSize;
 
@@ -19,8 +20,10 @@ public class Data {
     private int nProcessedBatches; // The number of samples wich the gpu has proccesed.
     private int nTrainedBatches; // The number of samples wich the gpu has proccesed.
 
-    public Data(Type t) {
-        this.type = t;        
+    public Data(String name, Type type, int size) {
+        this.name = name;
+        this.type = type;
+        this.dataSize = size; 
     }
     
     /**
@@ -35,11 +38,17 @@ public class Data {
         return this.type;
     }
 
-    public DataBatch createBatch(GPU gpu) throws IllegalCallerException{
+    /**
+     * Create next batch.
+     * @param gpu The GPU who created the batch
+     * @return
+     * @throws IllegalArgumentException
+     */
+    public DataBatch createBatch(GPU gpu) throws IllegalArgumentException{
         DataBatch batch = null;
 
-        if (this.isFragmantationFinished()) {
-            throw new IllegalCallerException();
+        if (this.isFragmantationFinished() | gpu == null) {
+            throw new IllegalArgumentException();
         }
 
         // Create the batch.
@@ -52,10 +61,10 @@ public class Data {
         return this.nFragmantatedBatches * BATCH_SIZE == this.dataSize;
     }
 
-    public void batchProcessed() throws IllegalCallerException {
+    public void batchProcessed() throws IllegalArgumentException {
         
         if (this.isProcessingFinished() | this.nProcessedBatches >= this.nFragmantatedBatches) {
-            throw new IllegalCallerException();
+            throw new IllegalArgumentException();
         }
 
         this.nProcessedBatches += 1;
