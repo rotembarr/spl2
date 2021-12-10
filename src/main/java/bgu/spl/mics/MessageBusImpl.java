@@ -41,7 +41,7 @@ public class MessageBusImpl implements MessageBus {
      * @post @result != null
      *  &&   @result = @post(getInstance) 
      */
-    public static MessageBus getInstance() {
+    public static MessageBusImpl getInstance() {
 		if (messageBus == null) {
 			messageBus = new MessageBusImpl();
 		}

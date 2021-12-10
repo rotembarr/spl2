@@ -23,10 +23,19 @@ import java.util.Map;
  */
 public abstract class MicroService implements Runnable {
 
+    // Variables.
     private boolean terminated = false;
     private final String name;
-	private Map<Class<? extends Message>, Callback<Message>> messageToCallbackMap;
+	private Map<Class<? extends Message>, Callback<? extends Message>> messageToCallbackMap;
     private MessageBus messageBus = null;
+
+    // Statistics.
+    private int sentEvent;
+    private int receivedEvent;
+    private int sentBroadcast;
+    private int receivedBroadcast;
+    private int completedEvent;
+
 
     /**
      * @param name the micro-service name (used mainly for debugging purposes -
@@ -35,8 +44,36 @@ public abstract class MicroService implements Runnable {
     public MicroService(String name) {
         this.terminated = false;
         this.name = name;
-        this.messageToCallbackMap = new HashMap<Class<? extends Message>, Callback<Message>>();
+        this.messageToCallbackMap = new HashMap<Class<? extends Message>, Callback<? extends Message>>();
         this.messageBus = MessageBusImpl.getInstance();
+        
+        this.sentEvent = 0;
+        this.receivedEvent = 0;
+        this.sentBroadcast = 0;
+        this.receivedBroadcast = 0;
+        this.completedEvent = 0;
+    }
+
+    /**
+     * Checks if the given type subscribed.
+     * @param <T>
+     * @param <E>
+     * @param type
+     * @return
+     */
+    public <T, E extends Event<T>> boolean isSubscribedEvent(Class<E> type) {
+        return this.messageToCallbackMap.containsKey(type);
+    }
+
+    /**
+     * Checks if the given type subscribed.
+     * @param <T>
+     * @param <E>
+     * @param type
+     * @return
+     */
+    public <B extends Broadcast> boolean isSubscribedBroadcast(Class<B> type) {
+        return this.messageToCallbackMap.containsKey(type);
     }
 
     /**
@@ -65,7 +102,8 @@ public abstract class MicroService implements Runnable {
             return;
         }
 
-        this.messageToCallbackMap.put(type, (Callback<Message>)callback);
+        this.messageToCallbackMap.put(type, callback);
+        this.messageBus.subscribeEvent(type, this);
     }
 
     /**
@@ -93,7 +131,8 @@ public abstract class MicroService implements Runnable {
             return;
         }
 
-        this.messageToCallbackMap.put(type, (Callback<Message>)callback);
+        this.messageToCallbackMap.put(type, callback);
+        this.messageBus.subscribeBroadcast(type, this);
     }
 
     /**
@@ -109,7 +148,9 @@ public abstract class MicroService implements Runnable {
      * 	       			null in case no micro-service has subscribed to {@code e.getClass()}.
      */
     protected final <T> Future<T> sendEvent(Event<T> e) {
-        return this.messageBus.sendEvent(e);
+        Future<T> future = this.messageBus.sendEvent(e);
+        this.sentEvent++;
+        return future;
     }
 
     /**
@@ -120,6 +161,7 @@ public abstract class MicroService implements Runnable {
      */
     protected final void sendBroadcast(Broadcast b) {
         this.messageBus.sendBroadcast(b);
+        this.sentBroadcast++;
     }
 
     /**
@@ -134,6 +176,7 @@ public abstract class MicroService implements Runnable {
      */
     protected final <T> void complete(Event<T> e, T result) {
         this.messageBus.complete(e, result);
+        this.completedEvent++;
     }
 
     /**
@@ -154,7 +197,7 @@ public abstract class MicroService implements Runnable {
      *         construction time and is used mainly for debugging purposes.
      */
     public final String getName() {
-        return name;
+        return this.name;
     }
 
     /**
@@ -174,8 +217,16 @@ public abstract class MicroService implements Runnable {
             }
 
             if (this.messageToCallbackMap.containsKey(message)) {
-                Callback<Message> callback = this.messageToCallbackMap.get(message);
-                callback.call(message);
+
+                if (message instanceof Broadcast) {
+                    Callback<Broadcast> callback = (Callback<Broadcast>)(Callback<?>)this.messageToCallbackMap.get(message);
+                    callback.call((Broadcast)message);
+                    this.receivedBroadcast++;
+                } else {
+                    Callback<Event<?>> callback = (Callback<Event<?>>)(Callback<?>)this.messageToCallbackMap.get(message);
+                    callback.call((Event<?>)message);
+                    this.receivedEvent++;
+                }
             }
         }
     }
