@@ -1,5 +1,8 @@
 package bgu.spl.mics.application.objects;
 
+import java.util.ArrayDeque;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 
 /**
@@ -12,15 +15,15 @@ public class GPU {
     /**
      * Enum representing the type of the GPU.
      */
-    enum Type {RTX3090, RTX2080, GTX1080}
+    public enum Type {RTX3090, RTX2080, GTX1080}
 
     private Type type;
     private Cluster cluster;
-    private Queue<Model> modelsToProcess; // Has no size limit.
+    private List<Model> modelsToTrain; // Has no size limit.
     
     // Internal use.
-    private Queue<DataBatch> processedbatches; // Up to 32
-    private long numOfBatchesSentToProcess;
+    private Queue<DataBatch> processedBatchesQueue; // Up to 32
+    private int nProcessingBatches;
     private int trainingCnt; // Number of ticks the current processed batch is training. 
     private boolean isTraining;
     
@@ -32,12 +35,12 @@ public class GPU {
     public GPU(Type type) {
         this.type = type;
         this.cluster = Cluster.getInstance();
-        this.modelsToProcess = null;
-        this.processedbatches = null;
-        this.numOfBatchesSentToProcess = 0;
+        this.modelsToTrain = new LinkedList<Model>();
+        this.processedBatchesQueue = new ArrayDeque<DataBatch>();
+        this.nProcessingBatches = 0;
         this.trainingCnt = 0;
         this.isTraining = false;
-        this.modelNames = null;
+        this.modelNames = new LinkedList<String>();
         this.nOfTimePass = 0;
     }
 
@@ -48,8 +51,8 @@ public class GPU {
      * @pre none
      * @post {@result} = this.modelNames.
      */
-    public Queue<String> getModelNames() {
-        return null;
+    public List<String> getModelNames() {
+        return new LinkedList<String>(this.modelNames);
     }        
 
     /**
@@ -85,6 +88,7 @@ public class GPU {
     public long getNumOfTrainedBatches() {
         return this.numOfTrainedBatches;
     }
+
     /**
      * Calculate the number of ticks process a batch takes according to its type:
      *     - 3090 - 1 ticks.
@@ -97,11 +101,34 @@ public class GPU {
      * @post {@return} != 0
      */
     protected int numOfTickToTrain() {
-        return 0;
+        if (this.type == Type.RTX3090) {
+            return 1;
+        } else if (this.type == Type.RTX2080) {
+            return 2;
+        } else {
+            return 4;
+        }
     }
 
+    /**
+     * Return the size of internal VRAM:
+     *     - 3090 - 32 batches.
+     *     - 2080 - 16 batches.
+     *     - 1080 - 8 batches.
+     * @param type
+     * @return vram size.
+     * 
+     * @pre {@param type} is a valid type
+     * @post {@return} != 0
+     */
     protected int vRAMsizeInBatches() {
-        return 0;
+        if (this.type == Type.RTX3090) {
+            return 32;
+        } else if (this.type == Type.RTX2080) {
+            return 16;
+        } else {
+            return 8;
+        }
     }
 
 
@@ -110,7 +137,7 @@ public class GPU {
      * @return
      */
     public int getModelsQueueSize() {
-        return this.modelsToProcess.size();
+        return this.modelsToTrain.size();
     }
 
     /**
@@ -123,11 +150,35 @@ public class GPU {
      * @return result describrd above.
      * 
      * @pre {@param model} != null 
-     * &&   {@param model.getStatus() = TRAINED}
+     * &&   {@param model.getStatus() != TRAINED}
      * @post {@param model.getStatus() = TESTED} and return {@result} as described above.
      */
-    public Model.Result testResult (Model model) throws IllegalArgumentException{
-        return Model.Result.NONE;
+    public void testModel (Model model) throws IllegalArgumentException {
+
+        // Checkers.
+        if (model == null || model.getStatus() != Model.Status.TRAINED) {
+            throw new IllegalArgumentException();
+        }
+
+        // Set chances of success.
+        System.out.println("aaa");
+        int chance = 0;
+        if (model.getStudent().getDegree() == Student.Degree.MSc) {
+            chance = 60;
+        } else { // PhD
+            chance = 80;
+        } 
+        System.out.println("aaa");
+
+
+        // Testing (pay attention to <).
+        boolean answer = ((int)Math.random() * 100) < chance ? true : false;
+        if (answer) {
+            model.setResult(Model.Result.GOOD);
+        } else {
+            model.setResult(Model.Result.BAD);
+        }
+        model.setStatus(Model.Status.TESTED);
     }
 
     /**
@@ -142,10 +193,18 @@ public class GPU {
      * 
      * @pre {@param model} != null 
      * && {@param model.getStatus()} = PRE_TRAINED
-     * && {@param model} not inside this.modelsToProcess
-     * @post @post(this.modelsToProcess.size) = 1 + @pre(this.modelsToProcess.size)
+     * && {@param model} not inside this.modelsToTrain
+     * @post @post(this.modelsToTrain.size) = 1 + @pre(this.modelsToTrain.size)
      */
     public void insertNewModel(Model model) throws IllegalArgumentException {
+        // Checkers.
+        if (model == null || model.getStatus() != Model.Status.PRE_TRAINED || this.modelsToTrain.contains(model)) {
+            throw new IllegalArgumentException();
+        }
+
+        // Add model.
+        this.modelsToTrain.add(model);
+        this.modelNames.add(model.getName());
     }
 
     /**
@@ -161,6 +220,15 @@ public class GPU {
      * @post this.cluster.getNumOfBatchesWaitingToProcess = 1 + @pre(getNumOfBatchesWaitingToProcess)
      */    
     protected void sendBatchToProcess(DataBatch batch) throws IllegalArgumentException{
+
+        // Checkers.
+        if (batch == null || batch.isDoneProcessing()) {
+            throw new IllegalArgumentException();
+        }
+
+        // Send batch to the cluster.
+        this.cluster.pushBatchToProcess(batch);
+        this.nProcessingBatches++;
     }
         
     /**
@@ -179,6 +247,28 @@ public class GPU {
      * @post all of the above
      */
     protected int fragmentizeBatchesToProcess() {
+        // Variables.
+        int cnt = 0;
+        int modelIndex = 0;
+        
+        // Search the first model who can send something
+        while (modelIndex < this.modelsToTrain.size() && this.modelsToTrain.get(modelIndex).getData().isFragmantationFinished()) {
+            modelIndex++;
+        }
+
+        while (this.nProcessingBatches < this.vRAMsizeInBatches() && modelIndex < this.modelsToTrain.size() && !this.modelsToTrain.get(modelIndex).getData().isFragmantationFinished()) {
+
+            // Creae and send batch
+            DataBatch newBatch = this.modelsToTrain.get(modelIndex).getData().createBatch(this);
+            this.cluster.pushBatchToProcess(newBatch);
+            this.nProcessingBatches++;
+
+            // Search the first model who can send something - hot swap.
+            while (modelIndex < this.modelsToTrain.size() && this.modelsToTrain.get(modelIndex).getData().isFragmantationFinished()) {
+                modelIndex++;
+            }
+
+        }
         return 0;
     }
 
@@ -195,8 +285,18 @@ public class GPU {
      *  && {@return}.getGPU() = this.
      */
     protected DataBatch tryToFetchProcessedBatch() {
-        // if (this.processedbatches.size() >= 32)
-        return null;
+
+        // Cannot import more than vRAM size. IT shouldnt happend anyway!!
+        if (this.processedBatchesQueue.size() >= this.vRAMsizeInBatches()) {
+            return null;
+        }
+
+        // Poll from cluster in non blocking manner.
+        DataBatch batch = this.cluster.popProcessedBatch(this);
+        if (batch != null) {
+            this.nProcessingBatches--;
+        }
+        return batch;
     }
 
     /**
@@ -214,6 +314,15 @@ public class GPU {
      *  &&   @post(this.trainingCnt) = 0.
      */
     protected void startTrainBatch(DataBatch batch) throws IllegalArgumentException {
+
+        // Checkers
+        if (batch == null || (!batch.isDoneProcessing() | batch.getGPU() != this | this.isTraining)) {
+            throw new IllegalArgumentException();            
+        }
+
+        // Start train.
+        this.isTraining = true;
+        this.trainingCnt = 0;
     }
 
     /**
@@ -242,6 +351,16 @@ public class GPU {
      *  && this.isTraining = false
      */
     protected void finalizeTrainBatch(DataBatch batch) throws IllegalArgumentException {
+        
+        // Checkers
+        if (batch == null || (!batch.isDoneProcessing() | batch.getGPU() != this | !this.isTraining)) {
+            throw new IllegalArgumentException();            
+        }
+
+        // Stop train.
+        batch.setAsTrained();
+        this.isTraining = false;
+        this.trainingCnt = 0;
     }
 
     /**
@@ -253,11 +372,19 @@ public class GPU {
      * 
      * @pre {@param model} != null
      *  &&  {@param model.getData().isTrainingFinished() = true}
-     *  &&  {@param model} inside this.modelsToProcess
-     * @post @post(this.modelsToProcess.size()) = @pre(this.modelsToProcess.size()) -1
+     *  &&  {@param model} inside this.modelsToTrain
+     * @post @post(this.modelsToTrain.size()) = @pre(this.modelsToTrain.size()) -1
      * 
      */
     protected void doneTrainingModel(Model model) throws IllegalArgumentException {
+        
+        // Checkers
+        if (model == null || (!model.getData().isTrainingFinished() | !this.modelsToTrain.contains(model))) {
+            throw new IllegalArgumentException();            
+        }
+
+        model.setStatus(Model.Status.TRAINED);
+
     }
 
     /**
@@ -275,6 +402,6 @@ public class GPU {
      * @post all of the above
      */
     public void tickSystem() {
-
+        this.nOfTimePass++;
     }
 }

@@ -1,6 +1,13 @@
 package bgu.spl.mics.application.services;
 
+import bgu.spl.mics.Callback;
+import bgu.spl.mics.application.messages.TrainModelEvent;
+import bgu.spl.mics.application.messages.TestModelEvent;
+import bgu.spl.mics.application.messages.TickBroadcast;
+import bgu.spl.mics.MessageBusImpl;
 import bgu.spl.mics.MicroService;
+import bgu.spl.mics.application.objects.GPU;
+import bgu.spl.mics.application.objects.Model;
 
 /**
  * GPU service is responsible for handling the
@@ -13,14 +20,37 @@ import bgu.spl.mics.MicroService;
  */
 public class GPUService extends MicroService {
 
-    public GPUService(String name) {
-        super("Change_This_Name");
-        // TODO Implement this
+    private GPU gpu = null;
+    
+    public GPUService(String name, GPU.Type type) {
+        super(name);
+        this.gpu = new GPU(type);
     }
 
     @Override
     protected void initialize() {
-        // TODO Implement this
+
+        // Train Model Event.
+        super.<Model, TrainModelEvent>subscribeEvent(TrainModelEvent.class, new Callback<TrainModelEvent>() {
+            public void call(TrainModelEvent c) {
+                gpu.insertNewModel(c.getModel());
+            }
+        });
+
+        // Test Model Event.
+        super.<Model, TestModelEvent>subscribeEvent(TestModelEvent.class, new Callback<TestModelEvent>() {
+            public void call(TestModelEvent c) {
+                gpu.testModel(c.getModel());
+            }
+        });
+
+        // Tick Broadcast.
+        super.<TickBroadcast>subscribeBroadcast(TickBroadcast.class, new Callback<TickBroadcast>() {
+            public void call(TickBroadcast c) {
+                gpu.tickSystem();
+            }
+        });
+        
 
     }
 }

@@ -18,4 +18,11 @@ public class Student {
     private int publications;
     private int papersRead;
 
+    public Student(Degree degree) {
+        this.status = degree;
+    }
+
+    public Degree getDegree() {
+        return this.status;
+    }
 }

@@ -42,4 +42,12 @@ public class Model {
     public Result getResult() {
         return this.result;
     }
+
+    public Student getStudent() {
+        return this.student;
+    }
+
+    public String getName() {
+        return this.name;
+    }
 }

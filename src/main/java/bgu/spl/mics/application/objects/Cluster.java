@@ -84,6 +84,7 @@ public class Cluster {
 
 	public void pushBatchToProcess(DataBatch batch){
 		this.unprocessedBatches.add(batch);
+		System.out.println(this.unprocessedBatches.size());
 	}
 
 	public DataBatch popBatchToProcess(){

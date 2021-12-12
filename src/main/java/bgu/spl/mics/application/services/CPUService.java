@@ -1,6 +1,9 @@
 package bgu.spl.mics.application.services;
 
+import bgu.spl.mics.Callback;
 import bgu.spl.mics.MicroService;
+import bgu.spl.mics.application.messages.TickBroadcast;
+import bgu.spl.mics.application.objects.CPU;
 
 /**
  * CPU service is responsible for handling the {@link DataPreProcessEvent}.
@@ -10,14 +13,23 @@ import bgu.spl.mics.MicroService;
  * You MAY change constructor signatures and even add new public constructors.
  */
 public class CPUService extends MicroService {
-    public CPUService(String name) {
-        super("Change_This_Name");
-        // TODO Implement this
+
+    private CPU cpu = null;
+
+    public CPUService(String name, int cores) {
+        super(name);
+        this.cpu = new CPU(cores);
     }
 
     @Override
     protected void initialize() {
-        // TODO Implement this
+
+        // Tick Broadcast.
+        super.<TickBroadcast>subscribeBroadcast(TickBroadcast.class, new Callback<TickBroadcast>() {
+            public void call(TickBroadcast c) {
+                cpu.tickSystem();
+            }
+        });
 
     }
 }
