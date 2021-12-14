@@ -13,15 +13,21 @@ import bgu.spl.mics.MicroService;
  */
 public class TimeService extends MicroService{
 
-	public TimeService() {
-		super("Change_This_Name");
-		// TODO Implement this
+	int clockFreq = -1;
+
+	public TimeService(String name, int clockFreq) {
+		super(name);
+		this.clockFreq = clockFreq;
 	}
 
 	@Override
 	protected void initialize() {
-		// TODO Implement this
-		
+		super.initialize();
 	}
+
+	// @Override
+    // public final void run() {
+	// 	this.initialize();
+	// }
 
 }

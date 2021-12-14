@@ -18,6 +18,7 @@ public class GPUTest {
     Model tabularModel = null;
     Model textModel = null;
     Model imageModel2 = null;
+    Model textModel2 = null;
 
 
     public GPUTest() {
@@ -31,6 +32,7 @@ public class GPUTest {
         this.tabularModel = new Model("b", new Data("Tabular", Data.Type.Tabular, 1000000), new Student(Student.Degree.MSc));
         this.textModel = new Model("c", new Data("Text", Data.Type.Text, 1000000), new Student(Student.Degree.MSc));
         this.imageModel2 = new Model("d", new Data("Image", Data.Type.Images, 1000000), new Student(Student.Degree.MSc));
+        this.textModel2 = new Model("e", new Data("Text", Data.Type.Text, 1000000), new Student(Student.Degree.MSc));
         this.cluster.addGPU(gpu);
         this.cluster.clearStatistics();
         DataBatch batch = null;
@@ -318,24 +320,60 @@ public class GPUTest {
     @Test
     public void TestTickSystem_Sanity() {
         Queue<Model> queue = new LinkedList<Model>();
-        CPU cpu = new CPU();
+        CPU cpu = new CPU(32);
 
-        queue.add(this.imageModel);
-        queue.add(this.tabularModel);
         queue.add(this.textModel);
-        queue.add(this.imageModel2);
-        this.gpu.insertNewModel(this.imageModel);
-        this.gpu.insertNewModel(this.tabularModel);
         this.gpu.insertNewModel(this.textModel);
-        this.gpu.insertNewModel(this.imageModel2);
 
-        for (int i = 0; i < 10000; i++) {
-            this.gpu.tickSystem();
-            cpu.tickSystem();
+        // latency
+        this.gpu.tickSystem();
+        cpu.tickSystem();
+        this.gpu.tickSystem();
+        cpu.tickSystem();
+        this.gpu.tickSystem();
+        cpu.tickSystem();
+        this.gpu.tickSystem();
+        cpu.tickSystem();
+        this.gpu.tickSystem();
+        cpu.tickSystem();
+
+        for (int i = 0; i < 1000; i++) {
+            this.gpu.tickSystem(); // Should train 500 batches in 1000 clocks.
+            cpu.tickSystem(); // Should process 1000 batches in 1000 clocks.
         }
 
-        assertEquals("Test failed", 5000, this.gpu.getNumOfTrainedBatches());
+        assertEquals("Test failed", 500, this.gpu.getNumOfTrainedBatches());
 
+    }
+
+    @Test
+    public void TestTickSystem_2Models() { 
+        Queue<Model> queue = new LinkedList<Model>();
+        CPU cpu = new CPU(32);
+
+        queue.add(this.textModel);
+        queue.add(this.textModel2);
+        this.gpu.insertNewModel(this.textModel);
+        this.gpu.insertNewModel(this.textModel2);
+
+        // latency
+        this.gpu.tickSystem();
+        cpu.tickSystem();
+        this.gpu.tickSystem();
+        cpu.tickSystem();
+        this.gpu.tickSystem();
+        cpu.tickSystem();
+        this.gpu.tickSystem();
+        cpu.tickSystem();
+        this.gpu.tickSystem();
+        cpu.tickSystem();
+
+        for (int i = 0; i < 3000; i++) {
+            this.gpu.tickSystem(); // Should train 1500 batches in 1000 clocks.
+            cpu.tickSystem(); // Should process 3000 batches in 1000 clocks.
+        }
+
+        assertEquals("Test failed", 1500, this.gpu.getNumOfTrainedBatches());
     }
 
 

@@ -6,8 +6,9 @@ package bgu.spl.mics.application.objects;
  */
 public class Data {
     final static int BATCH_SIZE = 1000;
+    
     // Enum representing the Data type.
-    enum Type {
+    public enum Type {
         Images, Text, Tabular
     }
 

@@ -161,15 +161,12 @@ public class GPU {
         }
 
         // Set chances of success.
-        System.out.println("aaa");
         int chance = 0;
         if (model.getStudent().getDegree() == Student.Degree.MSc) {
             chance = 60;
         } else { // PhD
             chance = 80;
         } 
-        System.out.println("aaa");
-
 
         // Testing (pay attention to <).
         boolean answer = ((int)Math.random() * 100) < chance ? true : false;
@@ -361,6 +358,7 @@ public class GPU {
         batch.setAsTrained();
         this.isTraining = false;
         this.trainingCnt = 0;
+        this.numOfTrainedBatches++;
     }
 
     /**
@@ -389,8 +387,8 @@ public class GPU {
 
     /**
      * This is a non-blocking function.
-     * First, it fragmantizes all the batches it can in order to let the CPUs  be busy all the time.
-     * Then it tries to fetch all the processed data (Up to the limit of the VRAM).
+     * First, it tries to fetch all the processed data (Up to the limit of the VRAM).
+     * Then, it fragmantizes all the batches it can in order to let the CPUs process and be busy all the time.
      * After, it checks if the training of the current batch has finished.
      * If so it tells the data of the batch that a batch has trained,
      * and after, it starts training a new batch and resets this.trainingCnt.
@@ -403,5 +401,31 @@ public class GPU {
      */
     public void tickSystem() {
         this.nOfTimePass++;
+        this.trainingCnt++;
+
+        if (this.processedBatchesQueue.size() > this.vRAMsizeInBatches()) {
+            throw new InternalError();
+        }
+        
+        // Train current batch.
+        if (this.doesTrainingBatchFinished()) {
+            this.finalizeTrainBatch(this.processedBatchesQueue.peek());
+            this.processedBatchesQueue.poll();
+        }
+
+        // Fetch as much as we can. tryToFetchProcessedBatch func will handle capacity.
+        DataBatch processedBatch = null;
+        while ((processedBatch = this.tryToFetchProcessedBatch()) != null) {
+            this.processedBatchesQueue.add(processedBatch);
+        }
+
+        // Send batches to cpu. max can be vRAM size batches 'in the air'.
+        this.fragmentizeBatchesToProcess();
+
+        // Start training new batch.
+        if (!this.isTraining && this.processedBatchesQueue.size() > 0) {
+            this.startTrainBatch(this.processedBatchesQueue.peek());
+        }
+
     }
 }

@@ -22,12 +22,14 @@ import java.util.Map;
  * <p>
  */
 public abstract class MicroService implements Runnable {
+    
+    // Global varivables.
+    protected MessageBus messageBus = null;
 
     // Variables.
     private boolean terminated = false;
     private final String name;
 	private Map<Class<? extends Message>, Callback<? extends Message>> messageToCallbackMap;
-    private MessageBus messageBus = null;
 
     // Statistics.
     private int sentEvent;
@@ -182,7 +184,10 @@ public abstract class MicroService implements Runnable {
     /**
      * this method is called once when the event loop starts.
      */
-    protected abstract void initialize();
+    protected void initialize() {
+        // Register to message bus.
+        this.messageBus.register(this);
+    }
 
     /**
      * Signals the event loop that it must terminate after handling the current

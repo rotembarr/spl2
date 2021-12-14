@@ -7,8 +7,8 @@ package bgu.spl.mics.application.objects;
  */
 public class Model {
     // Types.
-    enum Status {PRE_TRAINED, TRAINING, TRAINED, TESTED}
-    enum Result {NONE, GOOD, BAD}
+    public enum Status {PRE_TRAINED, TRAINING, TRAINED, TESTED}
+    public enum Result {NONE, GOOD, BAD}
 
     // Variables.
     private String name; // Name of the model.

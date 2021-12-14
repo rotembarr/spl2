@@ -1,5 +1,8 @@
 package bgu.spl.mics.application.services;
 
+import java.util.LinkedList;
+import java.util.Queue;
+
 import bgu.spl.mics.Callback;
 import bgu.spl.mics.application.messages.TrainModelEvent;
 import bgu.spl.mics.application.messages.TestModelEvent;
@@ -21,26 +24,32 @@ import bgu.spl.mics.application.objects.Model;
 public class GPUService extends MicroService {
 
     private GPU gpu = null;
+    private Queue<TrainModelEvent> trainEvents = null;
+
     
     public GPUService(String name, GPU.Type type) {
         super(name);
         this.gpu = new GPU(type);
+        this.trainEvents = new LinkedList<TrainModelEvent>();
     }
 
     @Override
     protected void initialize() {
+        super.initialize();
 
         // Train Model Event.
         super.<Model, TrainModelEvent>subscribeEvent(TrainModelEvent.class, new Callback<TrainModelEvent>() {
             public void call(TrainModelEvent c) {
                 gpu.insertNewModel(c.getModel());
+                trainEvents.add(c);
             }
         });
-
+        
         // Test Model Event.
         super.<Model, TestModelEvent>subscribeEvent(TestModelEvent.class, new Callback<TestModelEvent>() {
             public void call(TestModelEvent c) {
                 gpu.testModel(c.getModel());
+                messageBus.complete(c, c.getModel());
             }
         });
 
@@ -48,6 +57,10 @@ public class GPUService extends MicroService {
         super.<TickBroadcast>subscribeBroadcast(TickBroadcast.class, new Callback<TickBroadcast>() {
             public void call(TickBroadcast c) {
                 gpu.tickSystem();
+                if (trainEvents.size() > 0 && trainEvents.peek().getModel().getStatus() == Model.Status.TRAINED) {
+                    TrainModelEvent event = trainEvents.poll();
+                    messageBus.complete(event, event.getModel());
+                }
             }
         });
         
