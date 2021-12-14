@@ -5,6 +5,7 @@ import bgu.spl.mics.MessageBusImpl;
 import bgu.spl.mics.MicroService;
 import bgu.spl.mics.application.messages.TickBroadcast;
 import bgu.spl.mics.application.objects.CPU;
+import bgu.spl.mics.application.objects.Cluster;
 
 /**
  * CPU service is responsible for handling the {@link DataPreProcessEvent}.
@@ -25,6 +26,9 @@ public class CPUService extends MicroService {
     @Override
     protected void initialize() {
         super.initialize();
+
+        // Add cpu to the cluster.
+        Cluster.getInstance().addCPU(this.cpu);
 
         // Tick Broadcast.
         super.<TickBroadcast>subscribeBroadcast(TickBroadcast.class, new Callback<TickBroadcast>() {

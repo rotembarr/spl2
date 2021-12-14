@@ -221,19 +221,22 @@ public abstract class MicroService implements Runnable {
                 e.printStackTrace();
             }
 
-            if (this.messageToCallbackMap.containsKey(message)) {
+            if (this.messageToCallbackMap.containsKey(message.getClass())) {
 
                 if (message instanceof Broadcast) {
-                    Callback<Broadcast> callback = (Callback<Broadcast>)(Callback<?>)this.messageToCallbackMap.get(message);
+                    Callback<Broadcast> callback = (Callback<Broadcast>)(Callback<?>)this.messageToCallbackMap.get(message.getClass());
                     callback.call((Broadcast)message);
                     this.receivedBroadcast++;
                 } else {
-                    Callback<Event<?>> callback = (Callback<Event<?>>)(Callback<?>)this.messageToCallbackMap.get(message);
+                    Callback<Event<?>> callback = (Callback<Event<?>>)(Callback<?>)this.messageToCallbackMap.get(message.getClass());
                     callback.call((Event<?>)message);
                     this.receivedEvent++;
                 }
             }
         }
+
+        // Unrigster this service from message bus.
+        this.messageBus.unregister(this);
     }
 
 }

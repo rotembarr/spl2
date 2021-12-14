@@ -187,6 +187,7 @@ public class MessageBusImpl implements MessageBus {
 		this.eventToFutureMap.remove(e);
 
 		// Resolve the event.
+        System.out.println("event " + e + " completed");
 		future.resolve(result);
 	}
 

@@ -1,6 +1,19 @@
 package bgu.spl.mics.application.services;
 
+import bgu.spl.mics.Callback;
+import bgu.spl.mics.Event;
+import bgu.spl.mics.MessageBusImpl;
 import bgu.spl.mics.MicroService;
+import bgu.spl.mics.application.messages.PublishConferenceBroadcast;
+import bgu.spl.mics.application.messages.PublishResultEvent;
+import bgu.spl.mics.application.messages.TestModelEvent;
+import bgu.spl.mics.application.messages.TickBroadcast;
+import bgu.spl.mics.application.objects.ConfrenceInformation;
+import bgu.spl.mics.application.objects.Model;
+import bgu.spl.mics.application.objects.Student;
+
+import java.util.Queue;
+import java.util.Vector;
 
 /**
  * Conference service is in charge of
@@ -12,14 +25,38 @@ import bgu.spl.mics.MicroService;
  * You MAY change constructor signatures and even add new public constructors.
  */
 public class ConferenceService extends MicroService {
-    public ConferenceService(String name) {
-        super("Change_This_Name");
-        // TODO Implement this
+    
+    // Variables.
+    ConfrenceInformation confrenceInformation = null;
+    
+
+    public ConferenceService(String name, int date) {
+        super(name);
+        this.confrenceInformation = new ConfrenceInformation(name, date); 
     }
 
+    // Callback-test is good?,
     @Override
-    protected void initialize() {
-        // TODO Implement this
+    protected void initialize() {//subscribe event(publish result ..),suscribeBroadcast
+        super.<Model, PublishResultEvent>subscribeEvent(PublishResultEvent.class, new Callback<PublishResultEvent>() {
+            public void call(PublishResultEvent p) {
+                confrenceInformation.addModel(p.getModel());
+            }
+        });
 
+        super.<TickBroadcast>subscribeBroadcast(TickBroadcast.class, new Callback<TickBroadcast>() {
+            public void call(TickBroadcast t) {
+
+                // Tick system.
+                confrenceInformation.advanceCnt();
+
+                // Send broadcast and finish the job.
+                if (confrenceInformation.dateHasCome()) {
+                    PublishConferenceBroadcast p = new PublishConferenceBroadcast(confrenceInformation.getModels());
+                    sendBroadcast(p);
+                    terminate();
+                }
+            }
+        });
     }
 }

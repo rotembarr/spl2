@@ -14,9 +14,6 @@ public class Future<T> {
 	boolean done;
 	T returnObj;
 
-	// Lock machanizem.
-	Object lock;
-
 	/**
 	 * This should be the the only public constructor in this class.
 	 */
@@ -24,7 +21,6 @@ public class Future<T> {
 		//TODO: implement this
 		this.done = false;
 		this.returnObj = null;
-		this.lock = new Object();
 	}
 	
 	/**
@@ -37,12 +33,10 @@ public class Future<T> {
 	 * @pre none
 	 * @post {@return} = this.returnObj.
      */
-	public T get() {
+	public synchronized T get() {
 		if (!this.isDone()) {
 			try {
-				synchronized (lock) {
-					this.lock.wait();
-				}
+				this.wait();
 			} catch (Exception e) {
 				e.printStackTrace(); // TODO
 			}
@@ -57,14 +51,12 @@ public class Future<T> {
 	 * @pre this.isDone() = false
 	 * @post if (!this.isDone()) this.get() = {@param result}
      */
-	public void resolve (T result) {
+	public synchronized void resolve (T result) {
 		if (!this.isDone()) {
 			this.returnObj = result;
 		}
 		this.done = true;
-        synchronized (lock) {
-			this.lock.notify();
-		}
+		this.notifyAll();
 	}
 	
 	/**
@@ -72,7 +64,7 @@ public class Future<T> {
 	 * @pre none
 	 * @post @pre(this.done) = @post(this.done)
      */
-	public boolean isDone() {
+	public synchronized boolean isDone() {
 		return this.done;
 	}
 	
@@ -90,15 +82,12 @@ public class Future<T> {
 	 * @pre none
 	 * @post {@return} = this.returnObj.
      */
-	public T get(long timeout, TimeUnit unit) {
+	public synchronized T get(long timeout, TimeUnit unit) {
 		long waitTime = TimeUnit.MILLISECONDS.convert(timeout, unit);
 
 		if (!this.isDone()) {
-			System.out.println("aaa");
 			try {
-				synchronized (lock) {
-					this.lock.wait(waitTime);
-				}
+				this.wait(waitTime);
 			} catch (Exception e) {
 				e.printStackTrace(); // TODO
 			}

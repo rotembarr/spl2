@@ -4,26 +4,20 @@ import bgu.spl.mics.Event;
 import bgu.spl.mics.application.objects.Model;
 import bgu.spl.mics.application.objects.Student;
 
-public class TrainModelEvent implements Event<Model> {
-
-    // Variables.
+public class PublishResultEvent implements Event<Model> {
+    
     private Student student;
     private Model model;
 
-    public TrainModelEvent(Student student, Model model) {
-        this.student = student;
-        this.model = model;
+    public PublishResultEvent (Student s,Model m){//need to be pointers to the right student/model
+        this.student=s;
+        this.model=m;
     }
 
-    public Student getStudent() {
+    public Student getStudent(){
         return this.student;
     }
-
     public Model getModel() {
         return this.model;
-    }
-
-    public String toString() {
-        return this.model.getName();
     }
 }

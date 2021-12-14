@@ -9,6 +9,7 @@ import bgu.spl.mics.application.messages.TestModelEvent;
 import bgu.spl.mics.application.messages.TickBroadcast;
 import bgu.spl.mics.MessageBusImpl;
 import bgu.spl.mics.MicroService;
+import bgu.spl.mics.application.objects.Cluster;
 import bgu.spl.mics.application.objects.GPU;
 import bgu.spl.mics.application.objects.Model;
 
@@ -23,7 +24,7 @@ import bgu.spl.mics.application.objects.Model;
  */
 public class GPUService extends MicroService {
 
-    private GPU gpu = null;
+    private GPU gpu = null; 
     private Queue<TrainModelEvent> trainEvents = null;
 
     
@@ -36,6 +37,9 @@ public class GPUService extends MicroService {
     @Override
     protected void initialize() {
         super.initialize();
+
+        // Add gpu to the cluster.
+        Cluster.getInstance().addGPU(this.gpu);
 
         // Train Model Event.
         super.<Model, TrainModelEvent>subscribeEvent(TrainModelEvent.class, new Callback<TrainModelEvent>() {
@@ -56,9 +60,14 @@ public class GPUService extends MicroService {
         // Tick Broadcast.
         super.<TickBroadcast>subscribeBroadcast(TickBroadcast.class, new Callback<TickBroadcast>() {
             public void call(TickBroadcast c) {
+                
+                // Happend here a lot.
                 gpu.tickSystem();
+
+                // If the first event has finsh - complete it.
                 if (trainEvents.size() > 0 && trainEvents.peek().getModel().getStatus() == Model.Status.TRAINED) {
                     TrainModelEvent event = trainEvents.poll();
+                    System.out.println("event " + event + " starting its complete");
                     messageBus.complete(event, event.getModel());
                 }
             }
