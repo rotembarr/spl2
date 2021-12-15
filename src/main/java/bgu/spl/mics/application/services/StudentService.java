@@ -1,6 +1,18 @@
 package bgu.spl.mics.application.services;
 
+import java.util.List;
+import java.util.Queue;
+
+import bgu.spl.mics.Callback;
+import bgu.spl.mics.Future;
 import bgu.spl.mics.MicroService;
+import bgu.spl.mics.application.messages.PublishConferenceBroadcast;
+import bgu.spl.mics.application.messages.PublishResultEvent;
+import bgu.spl.mics.application.messages.TestModelEvent;
+import bgu.spl.mics.application.messages.TickBroadcast;
+import bgu.spl.mics.application.messages.TrainModelEvent;
+import bgu.spl.mics.application.objects.Model;
+import bgu.spl.mics.application.objects.Student;
 
 /**
  * Student is responsible for sending the {@link TrainModelEvent},
@@ -12,14 +24,65 @@ import bgu.spl.mics.MicroService;
  * You MAY change constructor signatures and even add new public constructors.
  */
 public class StudentService extends MicroService {
-    public StudentService(String name) {
-        super("Change_This_Name");
-        // TODO Implement this
+
+    // Locals variables.
+    Student student = null;
+    Future<Model> future = null;
+
+    public StudentService(String name, String department, Student.Degree status) {
+        super(name);
+        this.student = new Student(name, department, status);
     }
 
-    @Override
+    public void addModelToTrain(Model model) {
+        this.student.addModelToTrain(model);
+    }
+
+    public Student getStudent() {
+        return this.student;
+    }
+
     protected void initialize() {
-        // TODO Implement this
+        super.initialize();
+
+        // Tick Broadcast.
+        super.<TickBroadcast>subscribeBroadcast(TickBroadcast.class, new Callback<TickBroadcast>() {
+            public void call(TickBroadcast c) {
+                
+                // Send model to train
+                if (future == null) {
+                    if (!student.modelQueueEmpty()) {
+                        future = sendEvent(new TrainModelEvent(student, student.getModelToTrain()));
+                    }
+                } 
+
+                // When model has trained, test it within 
+                if (future != null) {
+                    if (future.isDone()) {
+
+                        // Extract model.
+                        Model model = future.get();
+                        if (model.getStatus() == Model.Status.TRAINED) { // Next thing is testing,
+                            future = sendEvent(new TestModelEvent(student, model));
+                        } else if (model.getStatus() == Model.Status.TESTED) {
+                            future = sendEvent(new PublishResultEvent(student, future.get()));
+                        } else if (model.getStatus() == Model.Status.PUBLISHED) {
+                            future = null;
+                        } else {
+                            throw new InternalError();
+                        }
+                    }
+                }
+            }
+        });
+
+        super.<PublishConferenceBroadcast>subscribeBroadcast(PublishConferenceBroadcast.class, new Callback<PublishConferenceBroadcast>() {
+            public void call(PublishConferenceBroadcast c) {
+                student.readPublication(c.getModels());
+            }
+        });
+        
+
 
     }
 }

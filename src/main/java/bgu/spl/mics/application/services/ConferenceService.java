@@ -40,7 +40,10 @@ public class ConferenceService extends MicroService {
     protected void initialize() {//subscribe event(publish result ..),suscribeBroadcast
         super.<Model, PublishResultEvent>subscribeEvent(PublishResultEvent.class, new Callback<PublishResultEvent>() {
             public void call(PublishResultEvent p) {
-                confrenceInformation.addModel(p.getModel());
+                Model model = p.getModel();
+                model.setStatus(Model.Status.PUBLISHED);
+                confrenceInformation.addModel(model);
+                complete(p, model);
             }
         });
 

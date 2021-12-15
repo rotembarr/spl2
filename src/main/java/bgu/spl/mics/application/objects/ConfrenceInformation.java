@@ -1,6 +1,7 @@
 package bgu.spl.mics.application.objects;
 
-import java.util.Vector;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Passive object representing information on a conference.
@@ -8,13 +9,13 @@ import java.util.Vector;
  */
 public class ConfrenceInformation {
 
-    private Vector<Model> modelsToPublish;
+    private List<Model> modelsToPublish;
     private String name;
     private int date;
     private int cnt;
 
     public ConfrenceInformation(String name, int date) {
-        this.modelsToPublish = new Vector<Model>();
+        this.modelsToPublish = new LinkedList<Model>();
         this.name = name;
         this.date = date;
         this.cnt = 0;
@@ -40,7 +41,7 @@ public class ConfrenceInformation {
         this.modelsToPublish.add(model);
     }
 
-    public Vector<Model> getModels() {
+    public List<Model> getModels() {
         return this.modelsToPublish;
     }
 }
