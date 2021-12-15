@@ -37,7 +37,7 @@ public class CPUandGPUTest {
         List<CPUService> cpuServiceArr = new LinkedList<CPUService>();
 
         // Services
-        for (int i = 0; i < nCpus; i++) {
+        for (int i = 0; i < nGpus; i++) {
             if (i%3 == 0)
                 gpuServiceArr.add(new GPUService("gpu_" + Integer.toString(i), GPU.Type.GTX1080));
             else if (i%3 == 1)
@@ -45,7 +45,7 @@ public class CPUandGPUTest {
             else
                 gpuServiceArr.add(new GPUService("gpu_" + Integer.toString(i), GPU.Type.RTX3090));
         }
-        for (int i = 0; i < nGpus; i++) {
+        for (int i = 0; i < nCpus; i++) {
             if (i%6 == 0)
                 cpuServiceArr.add(new CPUService("cpu_" + Integer.toString(i), 1));
             else if (i%6 == 1)
@@ -104,11 +104,8 @@ public class CPUandGPUTest {
                 modelArr.add(new Model("model_" + Integer.toString(i), new Data("data_" + Integer.toString(i), Data.Type.Text, 10000), student));
             else
                 modelArr.add(new Model("model_" + Integer.toString(i), new Data("data_" + Integer.toString(i), Data.Type.Tabular, 10000), student));
-
-            System.out.println(modelArr.get(i).getName());
         }
 
-        System.out.println("Sending models");
         for (int i = 0; i < modelArr.size(); i++) {
             TrainModelEvent event = new TrainModelEvent(student, modelArr.get(i));
 
@@ -119,31 +116,34 @@ public class CPUandGPUTest {
 
         // Result
         for (int i = 0; i < futureArr.size(); i++) {
-            System.out.println("Getting model " + Integer.toString(i));
             Model modelAfter = futureArr.get(i).get();
             assertTrue("Model hasn't trained good", modelAfter.getStatus() == Model.Status.TRAINED);
         }
     }
 
-    // @Test
-    // public void test__oneGPU_oneCPU() {
-    //     this.testCore(1,1,10, 10);
-    // }
-
-    // @Test
-    // public void test__FiveGPU_oneCPU() {
-    //     this.testCore(1,5,30, 20);
-    // }
-
-    // @Test
-    // public void test__OneGPU_FiveCPU() {
-    //     this.testCore(5,1,30, 20);
-    // }
-    
-
     @Test
-    public void test__8GPU_8CPU() {
-        this.testCore(8,8,100, 20);
+    public void test__oneGPU_oneCPU() {
+        this.testCore(1,1,100, 1);
     }
 
+    @Test
+    public void test__5GPU_1CPU() {
+        this.testCore(1, 5, 100, 5);
+    }
+
+    @Test
+    public void test__1GPU_5CPU() {
+        this.testCore(5, 1, 100, 1);
+    }
+    
+    @Test
+    public void test__8GPU_8CPU() {
+        this.testCore(8, 8, 700, 1);
+    }
+
+
+    @Test
+    public void test__20GPU_40CPU() {
+        this.testCore(20, 40, 150, 5);
+    }
 }

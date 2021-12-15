@@ -67,7 +67,6 @@ public class GPUService extends MicroService {
                 // If the first event has finsh - complete it.
                 if (trainEvents.size() > 0 && trainEvents.peek().getModel().getStatus() == Model.Status.TRAINED) {
                     TrainModelEvent event = trainEvents.poll();
-                    System.out.println("event " + event + " starting its complete");
                     messageBus.complete(event, event.getModel());
                 }
             }

@@ -194,6 +194,7 @@ public class GPU {
      * @post @post(this.modelsToTrain.size) = 1 + @pre(this.modelsToTrain.size)
      */
     public void insertNewModel(Model model) throws IllegalArgumentException {
+
         // Checkers.
         if (model == null || model.getStatus() != Model.Status.PRE_TRAINED || this.modelsToTrain.contains(model)) {
             throw new IllegalArgumentException();
@@ -385,9 +386,7 @@ public class GPU {
             throw new IllegalArgumentException();            
         }
 
-        System.out.println("model " + model.getName() + " finished training");
         model.setStatus(Model.Status.TRAINED);
-
     }
 
     /**
@@ -416,12 +415,13 @@ public class GPU {
         if (this.doesTrainingBatchFinished()) {
             this.finalizeTrainBatch(this.processedBatchesQueue.peek());
             this.processedBatchesQueue.poll();
+        }
 
-            // check if a model finish his training.
-            if (this.modelsToTrain.get(0).getData().isTrainingFinished()) {
-                this.doneTrainingModel(this.modelsToTrain.get(0));
-                this.modelsToTrain.remove(0);
-            }
+        // TODO
+        // check if a model finish his training.
+        if (this.modelsToTrain.size() > 0 && this.modelsToTrain.get(0).getData().isTrainingFinished()) {
+            this.doneTrainingModel(this.modelsToTrain.get(0));
+            this.modelsToTrain.remove(0);
         }
 
         // Fetch as much as we can. tryToFetchProcessedBatch func will handle capacity.

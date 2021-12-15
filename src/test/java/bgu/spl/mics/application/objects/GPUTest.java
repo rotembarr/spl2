@@ -134,7 +134,6 @@ public class GPUTest {
         assertEquals("Somehow batches sent to cluster when not need", 0, this.cluster.getNumOfBatchesWaitingToProcess());
         DataBatch batch = this.imageModel.getData().createBatch(this.gpu);
         this.gpu.sendBatchToProcess(batch);
-        System.out.println(this.cluster.getNumOfBatchesWaitingToProcess());
         assertEquals("bad numbers of batches in cluster", 1, this.cluster.getNumOfBatchesWaitingToProcess());
 
         for (int i = 0; i < 99; i++) {
@@ -199,14 +198,12 @@ public class GPUTest {
         DataBatch badGPUBatch = this.imageModel.getData().createBatch(badGpu);
         DataBatch okBatch = this.imageModel.getData().createBatch(this.gpu);
 
-        System.out.println(okBatch);
         assertThrows(IllegalArgumentException.class, () -> {this.gpu.startTrainBatch(null);});
         assertThrows(IllegalArgumentException.class, () -> {this.gpu.startTrainBatch(badGPUBatch);});
         assertThrows(IllegalArgumentException.class, () -> {this.gpu.startTrainBatch(okBatch);}); // havnet processed
         
         
         assertFalse("train shouldn't be start", this.gpu.isTraining());
-        System.out.println(okBatch);
         okBatch.setAsProcessed();
         this.gpu.startTrainBatch(okBatch); // This call is ok.
         assertTrue("train should have start", this.gpu.isTraining());
