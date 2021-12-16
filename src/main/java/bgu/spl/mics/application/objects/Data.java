@@ -12,9 +12,10 @@ public class Data {
         Images, Text, Tabular
     }
 
+    // Variables.
     private String name;
     private Type type; // Type of the data.
-    private int dataSize;
+    private int size;
 
     // Internal use.
     private int nFragmantatedBatches; // The number of batches sent to be processed. 
@@ -24,7 +25,7 @@ public class Data {
     public Data(String name, Type type, int size) {
         this.name = name;
         this.type = type;
-        this.dataSize = size; 
+        this.size = size; 
     }
     
     /**
@@ -38,6 +39,19 @@ public class Data {
     public Type getType() {
         return this.type;
     }
+
+    /**
+     * Returns the name of the data;
+     * @return this.name.
+     * 
+     * @pre none
+     * @inv calling this function doesn't change anything in the class.
+     * @post none
+     */
+    public String getName() {
+        return this.name;
+    }
+
 
     /**
      * Create next batch.
@@ -59,7 +73,7 @@ public class Data {
         return batch;
     }
     public boolean isFragmantationFinished() {
-        return this.nFragmantatedBatches * BATCH_SIZE == this.dataSize;
+        return this.nFragmantatedBatches * BATCH_SIZE == this.size;
     }
 
     public void batchProcessed() throws IllegalArgumentException {
@@ -71,7 +85,7 @@ public class Data {
         this.nProcessedBatches += 1;
     }
     public boolean isProcessingFinished() {
-        return this.nProcessedBatches * BATCH_SIZE == this.dataSize;
+        return this.nProcessedBatches * BATCH_SIZE == this.size;
     }
 
     public void batchTrained()  throws IllegalCallerException {
@@ -82,6 +96,6 @@ public class Data {
         this.nTrainedBatches += 1;
     }
     public boolean isTrainingFinished() {
-        return this.nTrainedBatches * BATCH_SIZE == this.dataSize;
+        return this.nTrainedBatches * BATCH_SIZE == this.size;
     }
 }

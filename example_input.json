@@ -9,22 +9,22 @@
             [
                 {
                     "name": "YOLO10",
-                    "type": "images",
+                    "type": "Images",
                     "size": 200000
                 },
                 {
                     "name": "ResNet9000",
-                    "type": "images",
+                    "type": "Images",
                     "size": 200000
                 },
                 {
                     "name": "LessEfficientNet",
-                    "type": "images",
+                    "type": "Images",
                     "size": 20000
                 },
                 {
                     "name": "DensestNet",
-                    "type": "images",
+                    "type": "Images",
                     "size": 200000
                 }
             ]
@@ -38,7 +38,7 @@
             [
                 {
                     "name": "VIT",
-                    "type": "images",
+                    "type": "Images",
                     "size": 100000000
                 }
             ]
@@ -110,22 +110,22 @@
             [
                 {
                     "name": "YOLO9000",
-                    "type": "images",
+                    "type": "Images",
                     "size": 100000
                 },
                 {
                     "name": "VIT2",
-                    "type": "images",
+                    "type": "Images",
                     "size": 1000000
                 },
                 {
                     "name": "MuchMoreEfficientNet",
-                    "type": "images",
+                    "type": "Images",
                     "size": 20000
                 },
                 {
                     "name": "DenserNet",
-                    "type": "images",
+                    "type": "Images",
                     "size": 100000
                 }
             ]
@@ -142,6 +142,6 @@
         {"name": "ECCV", "date": 4000},
         {"name": "AISTATS", "date": 5000}
     ],
-    "TickTime": 50,
-    "Duration": 5500
+    "TickTime": 10,
+    "Duration": 8000
 }

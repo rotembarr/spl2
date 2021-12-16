@@ -12,9 +12,9 @@ public class Model {
 
     // Variables.
     private String name; // Name of the model.
-    private Data data; // The data the odel should train on.
+    private Data data; // The data the model should train on.
     private Student student; // The student which created the model.
-    private Status status;
+    private Status status; 
     private Result result;
 
     public Model(String name, Data data, Student student) {

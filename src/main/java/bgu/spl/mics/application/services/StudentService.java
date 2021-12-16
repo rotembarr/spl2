@@ -1,5 +1,6 @@
 package bgu.spl.mics.application.services;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Queue;
 
@@ -11,6 +12,7 @@ import bgu.spl.mics.application.messages.PublishResultEvent;
 import bgu.spl.mics.application.messages.TestModelEvent;
 import bgu.spl.mics.application.messages.TickBroadcast;
 import bgu.spl.mics.application.messages.TrainModelEvent;
+import bgu.spl.mics.application.objects.Data;
 import bgu.spl.mics.application.objects.Model;
 import bgu.spl.mics.application.objects.Student;
 
@@ -27,8 +29,7 @@ public class StudentService extends MicroService {
 
     // Locals variables.
     Student student = null;
-    Future<Model> future = null;
-
+    
     public StudentService(String name, String department, Student.Degree status) {
         super(name);
         this.student = new Student(name, department, status);
@@ -41,17 +42,20 @@ public class StudentService extends MicroService {
     public Student getStudent() {
         return this.student;
     }
-
+    
     protected void initialize() {
         super.initialize();
 
         // Tick Broadcast.
         super.<TickBroadcast>subscribeBroadcast(TickBroadcast.class, new Callback<TickBroadcast>() {
+            Future<Model> future = null;
             public void call(TickBroadcast c) {
                 
                 // Send model to train
                 if (future == null) {
                     if (!student.modelQueueEmpty()) {
+                        System.out.println("Model sent from student - " + student.getName());
+
                         future = sendEvent(new TrainModelEvent(student, student.getModelToTrain()));
                     }
                 } 
@@ -67,6 +71,8 @@ public class StudentService extends MicroService {
                         } else if (model.getStatus() == Model.Status.TESTED) {
                             future = sendEvent(new PublishResultEvent(student, future.get()));
                         } else if (model.getStatus() == Model.Status.PUBLISHED) {
+                            System.out.println("Model " + model.getName() + "published by student - " + student.getName());
+
                             future = null;
                         } else {
                             throw new InternalError();
@@ -81,8 +87,5 @@ public class StudentService extends MicroService {
                 student.readPublication(c.getModels());
             }
         });
-        
-
-
     }
 }

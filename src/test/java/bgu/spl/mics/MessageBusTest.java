@@ -423,7 +423,7 @@ public class MessageBusTest extends MessageBusImpl {
 
     @Test
     public void TestAwaitMessage_NullArguent() {
-        assertThrows(InterruptedException.class, ()->{
+        assertThrows(IllegalArgumentException.class, ()->{
             super.awaitMessage(null);
         });
     }
@@ -431,7 +431,7 @@ public class MessageBusTest extends MessageBusImpl {
 
     @Test
     public void TestAwaitMessage_UnregisterService() {
-        assertThrows(InterruptedException.class, ()->{
+        assertThrows(IllegalArgumentException.class, ()->{
             String[] args = {"10"};
             super.awaitMessage(new ExampleBroadcastListenerService("mor",args));
         });
@@ -448,7 +448,7 @@ public class MessageBusTest extends MessageBusImpl {
                 String[] args = {"10"};
                 super.awaitMessage(new ExampleBroadcastListenerService("mor",args));
             } catch (Exception e) {
-                if (e instanceof InterruptedException) {
+                if (e instanceof IllegalArgumentException) {
                     d = true;
                 }
             }
@@ -492,18 +492,25 @@ public class MessageBusTest extends MessageBusImpl {
             try {
                 Thread.sleep(50);
             } catch (Exception e) {
-                assertTrue("Test failed - sleep exception", false);
+                throw new InternalError();
             }
 
             super.sendBroadcast(b);
         });
 
         wait.start();
+        // try {
+        //     wait.join();
+        // } catch (Exception e) {
+        //     throw new InternalError();
+        // }
         
         try {
             assertEquals(b, (Broadcast)super.awaitMessage(M));
         } catch (Exception e) {
             assertTrue("Test failed - await message exception", false);
         }
+
+
     }
 }

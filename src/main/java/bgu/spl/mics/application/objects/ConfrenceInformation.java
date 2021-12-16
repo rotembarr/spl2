@@ -34,7 +34,7 @@ public class ConfrenceInformation {
     }
 
     public boolean dateHasCome() {
-        return this.date >= this.cnt;
+        return this.cnt >= this.date;
     }
 
     public void addModel(Model model) {

@@ -200,6 +200,8 @@ public class GPU {
             throw new IllegalArgumentException();
         }
 
+        System.out.println("Model " + model.getName() + "Inserted GPU");
+
         // Add model.
         this.modelsToTrain.add(model);
         this.modelNames.add(model.getName());

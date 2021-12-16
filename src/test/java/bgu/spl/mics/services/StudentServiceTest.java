@@ -173,6 +173,6 @@ public class StudentServiceTest {
     // }
     @Test
     public void test_100Student() {
-        testCore(100, 100, 1);
+        testCore(100, 100, 8);
     }
 }

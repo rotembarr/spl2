@@ -3,6 +3,8 @@ package bgu.spl.mics;
 import java.util.HashMap;
 import java.util.Map;
 
+import bgu.spl.mics.application.messages.TerminateBroadcast;
+
 /**
  * The MicroService is an abstract class that any micro-service in the system
  * must extend. The abstract MicroService class is responsible to get and
@@ -25,10 +27,10 @@ public abstract class MicroService implements Runnable {
     
     // Global varivables.
     protected MessageBus messageBus = null;
+    private final String name;
 
     // Variables.
     private boolean terminated = false;
-    private final String name;
 	private Map<Class<? extends Message>, Callback<? extends Message>> messageToCallbackMap;
 
     // Statistics.
@@ -187,6 +189,14 @@ public abstract class MicroService implements Runnable {
     protected void initialize() {
         // Register to message bus.
         this.messageBus.register(this);
+
+        // All the services will register this msg and shut themselves down when it comes.
+        this.subscribeBroadcast(TerminateBroadcast.class, new Callback<TerminateBroadcast>() {
+            public void call(TerminateBroadcast b) {
+                terminate();
+            }
+        });
+        
     }
 
     /**
@@ -194,6 +204,8 @@ public abstract class MicroService implements Runnable {
      * message.
      */
     protected final void terminate() {
+        // Unrigster this service from message bus and exit.
+        this.messageBus.unregister(this);
         this.terminated = true;
     }
 
@@ -215,28 +227,28 @@ public abstract class MicroService implements Runnable {
         while (!terminated) {
             Message message = null;
             
+            // Get messages untill end of process.
             try {
                 message = this.messageBus.awaitMessage(this);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            if (this.messageToCallbackMap.containsKey(message.getClass())) {
-
-                if (message instanceof Broadcast) {
-                    Callback<Broadcast> callback = (Callback<Broadcast>)(Callback<?>)this.messageToCallbackMap.get(message.getClass());
-                    callback.call((Broadcast)message);
-                    this.receivedBroadcast++;
-                } else {
-                    Callback<Event<?>> callback = (Callback<Event<?>>)(Callback<?>)this.messageToCallbackMap.get(message.getClass());
-                    callback.call((Event<?>)message);
-                    this.receivedEvent++;
+                
+                // Calback handling.
+                if (this.messageToCallbackMap.containsKey(message.getClass())) {
+                    
+                    if (message instanceof Broadcast) {
+                        Callback<Broadcast> callback = (Callback<Broadcast>)(Callback<?>)this.messageToCallbackMap.get(message.getClass());
+                        callback.call((Broadcast)message);
+                        this.receivedBroadcast++;
+                    } else {
+                        Callback<Event<?>> callback = (Callback<Event<?>>)(Callback<?>)this.messageToCallbackMap.get(message.getClass());
+                        callback.call((Event<?>)message);
+                        this.receivedEvent++;
+                    }
                 }
-            }
-        }
 
-        // Unrigster this service from message bus.
-        this.messageBus.unregister(this);
+            } catch (InterruptedException e) {
+                this.terminate();
+            }
+        }            
     }
 
 }

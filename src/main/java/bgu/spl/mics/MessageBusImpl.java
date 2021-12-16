@@ -7,10 +7,11 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+
+import bgu.spl.mics.application.objects.RoundRobbinArrayList;
 
 /**
  * The {@link MessageBusImpl class is the implementation of the MessageBus interface.
@@ -34,7 +35,7 @@ public class MessageBusImpl implements MessageBus {
 	Map<Event<?>, Future<?>> eventToFutureMap;
 	
 	// Sending Handling.
-	Map<Class<? extends Message>, Pair<Integer, List<MicroService>>> eventToServiceMap;
+	Map<Class<? extends Message>, RoundRobbinArrayList<MicroService>> eventToServiceMap;
 	Map<Class<? extends Message>, List<MicroService>> broadcastToServiceMap;
 
 	/**
@@ -46,7 +47,7 @@ public class MessageBusImpl implements MessageBus {
 		this.serviceToQueueMap = new HashMap<MicroService, BlockingQueue<Message>>();
 		this.eventToFutureMap = new HashMap<Event<?>, Future<?>>();
 
-		this.eventToServiceMap = new HashMap<Class<? extends Message>, Pair<Integer, List<MicroService>>> ();
+		this.eventToServiceMap = new HashMap<Class<? extends Message>, RoundRobbinArrayList<MicroService>>();
 		this.broadcastToServiceMap = new HashMap<Class<? extends Message>, List<MicroService>> ();
 	}
 
@@ -108,7 +109,7 @@ public class MessageBusImpl implements MessageBus {
      * @pre none
      * @post trivial
      */
-    public boolean isSubscribedBroadcast(Class<? extends Broadcast> type, MicroService m) {
+    public synchronized boolean isSubscribedBroadcast(Class<? extends Broadcast> type, MicroService m) {
 		// First, check if the service exists.
 		if (!this.isRegister(m)) {
 			return false;
@@ -135,14 +136,16 @@ public class MessageBusImpl implements MessageBus {
 		types.add(type);
 
 
-		Pair<Integer, List<MicroService>> entry = null;
+		RoundRobbinArrayList<MicroService> list = null;
 		if (this.eventToServiceMap.containsKey(type)) {
-			entry = this.eventToServiceMap.get(type);
+			list = this.eventToServiceMap.get(type);
 		} else {
-			entry = new Pair<Integer, List<MicroService>>(0, new LinkedList<MicroService>());
-			this.eventToServiceMap.put(type, entry);
+			list = new RoundRobbinArrayList<MicroService>();
+			this.eventToServiceMap.put(type, list);
 		}
-		entry.getSecond().add(m);
+		list.add(m);
+		// System.out.println(type);
+		// System.out.println(list.size());
 	}
 
 	/**
@@ -150,7 +153,7 @@ public class MessageBusImpl implements MessageBus {
      * @post @post(this.isSubscribedBroadcast({@param type}, {@param m})) = true 
 	 */
 	@Override
-	public void subscribeBroadcast(Class<? extends Broadcast> type, MicroService m) {
+	public synchronized void subscribeBroadcast(Class<? extends Broadcast> type, MicroService m) {
 		// If the service haven't register - do nothing.
 		if (!this.isRegister(m)) {
 			return;
@@ -216,7 +219,7 @@ public class MessageBusImpl implements MessageBus {
 	 * @post {@code }
 	 */	
 	@Override
-	public <T> Future<T> sendEvent(Event<T> e) {
+	public synchronized <T> Future<T> sendEvent(Event<T> e) {
 		if (e == null || this.eventToFutureMap.containsKey(e)) {
 			return null;
 		} // TODO
@@ -231,11 +234,11 @@ public class MessageBusImpl implements MessageBus {
 		this.eventToFutureMap.put(e, future);
 		
 		// Send the event to one of the queues and advance round robbin counter.
-		Pair<Integer, List<MicroService>> pair = this.eventToServiceMap.get(e.getClass());
-		MicroService microService =  pair.getSecond().get(pair.getFirst());
-		this.serviceToQueueMap.get(microService).add(e);
-		Integer cnt = pair.getFirst();
-		pair.setFirst((cnt + 1)%pair.getSecond().size());
+		RoundRobbinArrayList<MicroService> list = this.eventToServiceMap.get(e.getClass());
+		// System.out.println(e);
+		// System.out.println(e.getClass());
+		// System.out.println(list.size());
+		this.serviceToQueueMap.get(list.next()).add(e);
 
 		return future;
 	}
@@ -263,7 +266,7 @@ public class MessageBusImpl implements MessageBus {
 	 * @post this.isRegister(m) = false.
 	 */
 	@Override
-	public void unregister(MicroService m) {
+	public synchronized void unregister(MicroService m) {
 		// Ignore null services.
 		if (m == null) {
 			return;
@@ -282,22 +285,16 @@ public class MessageBusImpl implements MessageBus {
 		}
 
 		// Remove m's events subsribtion.
-		Collection<Pair<Integer, List<MicroService>>> allEventsMicroServices = this.eventToServiceMap.values();
-		for (Iterator<Pair<Integer, List<MicroService>>> iter = allEventsMicroServices.iterator(); iter.hasNext();) {
-			Pair<Integer, List<MicroService>> pair = iter.next();
+		Collection<RoundRobbinArrayList<MicroService>> allEventsMicroServices = this.eventToServiceMap.values();
+		for (Iterator<RoundRobbinArrayList<MicroService>> iter = allEventsMicroServices.iterator(); iter.hasNext();) {
+			RoundRobbinArrayList<MicroService> list = iter.next();
 
-			List<MicroService> list = pair.getSecond();
+			// Remove from list.
 			if (list.contains(m)) {
-				int index = list.indexOf(m);
-				
-				// Update round robbin counter
-				if (pair.getFirst() > index) {
-					pair.setFirst(pair.getFirst() - 1); // Note that cnt > 0 so its fine just to sub.
-				}
-
-				// Remove from list.
-				list.remove(index);
+				list.remove(m);
 			}
+
+			// TODO
 		}
 
 		// Remove m's broadcast subsribtion.
@@ -310,13 +307,15 @@ public class MessageBusImpl implements MessageBus {
 
 	@Override
 	public Message awaitMessage(MicroService m) throws InterruptedException {
-
-		if (m == null || !this.isRegister(m)) {
-			throw new InterruptedException();
+		BlockingQueue<Message> queue = null;
+		synchronized(this) {
+			if (m == null || !this.isRegister(m)) {
+				throw new IllegalArgumentException();
+			}
+	
+			// Poll message.
+			queue = this.serviceToQueueMap.get(m);
 		}
-
-		// Poll message.
-		BlockingQueue<Message> queue = this.serviceToQueueMap.get(m);
 		return queue.take();
 	}
 	
