@@ -22,6 +22,10 @@ public class CPUService extends MicroService {
         this.cpu = new CPU(cores);
     }
 
+    public CPU getCpu() {
+        return this.cpu;
+    }
+
     @Override
     protected void initialize() {
         super.initialize();

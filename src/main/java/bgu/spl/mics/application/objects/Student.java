@@ -3,9 +3,8 @@ package bgu.spl.mics.application.objects;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
-import bgu.spl.mics.Pair;
+import com.google.gson.annotations.Expose;
 
 /**
  * Passive object representing single student.
@@ -20,16 +19,26 @@ public class Student {
     }
 
     // Local variables.
+    @Expose(serialize = true, deserialize = true)
     private String name;
+    @Expose(serialize = true, deserialize = true)
     private String department;
+    @Expose(serialize = true, deserialize = true)
     private Degree status;
-
+    
     // Statistics.
+    @Expose(serialize = true, deserialize = true)
     private int publications;
+    @Expose(serialize = true, deserialize = true)
     private int papersRead;
-
+    
     // Train event variables.
+    @Expose(serialize = true, deserialize = true)
     private List<Model> modelsToTrain;
+    @Expose(serialize = true, deserialize = true)
+    private List<Model> publishedModels;
+    @Expose(serialize = true, deserialize = true)
+    private List<Model> unpublishedTestedModels;
 
     public Student(Degree status) {
         this.status = status;
@@ -42,6 +51,8 @@ public class Student {
         this.publications = 0;
         this.papersRead = 0;
         this.modelsToTrain = new LinkedList<Model>(); 
+        this.publishedModels = new LinkedList<Model>(); 
+        this.unpublishedTestedModels = new LinkedList<Model>(); 
     }
 
     public String getName() {
@@ -75,18 +86,27 @@ public class Student {
     public Model getModelToTrain() {
         return this.modelsToTrain.remove(0);
     }
+
+    public void addModelThatCouldntPublish(Model model) {
+        this.unpublishedTestedModels.add(model);
+    }
     
     public void readPublication(List<Model> publishModels) {
         for (Iterator<Model> iter = publishModels.iterator(); iter.hasNext();) {
             Model model = iter.next();
-
-            // Model read.
-            this.papersRead++;
-
+            
             // If we sent this publication, advance counter.
             if (model.getStudent().hashCode() == this.hashCode()) {
+                
+                model.setStatus(Model.Status.PUBLISHED);
+                this.publishedModels.add(model);
                 this.publications++;
+
+            // Model of other student read.
+            } else {
+                this.papersRead++;
             }
+            
         }
     }
 }

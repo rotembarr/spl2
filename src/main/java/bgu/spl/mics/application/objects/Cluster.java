@@ -8,8 +8,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import bgu.spl.mics.MicroService;
-
 /**
  * Passive object representing the cluster.
  * <p>

@@ -29,8 +29,9 @@ public class GPU {
     
     // Statistics.
     private Queue<String> modelNames;
-    private long numOfTrainedBatches;
-    private long nOfTimePass;
+    private int numOfTrainedBatches;
+    private int nTimePass;
+    private int nTimeUsed;
 
     public GPU(Type type) {
         this.type = type;
@@ -41,7 +42,8 @@ public class GPU {
         this.trainingCnt = 0;
         this.isTraining = false;
         this.modelNames = new LinkedList<String>();
-        this.nOfTimePass = 0;
+        this.nTimePass = 0;
+        this.nTimeUsed = 0;
     }
 
     /**
@@ -57,13 +59,24 @@ public class GPU {
 
     /**
      * Return number of ticks happends.
-     * @return this.nOfTimePass
+     * @return this.nTimePass
      * 
      * @pre none
      * @post trivial
      */
-    public long getNumOfTimePass() {
-        return this.nOfTimePass;
+    public int getNumOfTimePass() {
+        return this.nTimePass;
+    }
+
+    /**
+     * Return number of ticks CPU processed.
+     * @return this.nOfTimeUsed
+     * 
+     * @pre none
+     * @post trivial
+     */
+    public int getNumOfTimeUsed() {
+        return this.nTimeUsed;
     }
 
     
@@ -85,7 +98,7 @@ public class GPU {
      * @pre none
      * @post none
      */
-    public long getNumOfTrainedBatches() {
+    public int getNumOfTrainedBatches() {
         return this.numOfTrainedBatches;
     }
 
@@ -199,8 +212,6 @@ public class GPU {
         if (model == null || model.getStatus() != Model.Status.PRE_TRAINED || this.modelsToTrain.contains(model)) {
             throw new IllegalArgumentException();
         }
-
-        System.out.println("Model " + model.getName() + "Inserted GPU");
 
         // Add model.
         this.modelsToTrain.add(model);
@@ -406,8 +417,11 @@ public class GPU {
      * @post all of the above
      */
     public void tickSystem() {
-        this.nOfTimePass++;
+        this.nTimePass++;
         this.trainingCnt++;
+        if (this.isTraining) {
+            this.nTimeUsed++;
+        }
 
         if (this.processedBatchesQueue.size() > this.vRAMsizeInBatches()) {
             throw new InternalError();

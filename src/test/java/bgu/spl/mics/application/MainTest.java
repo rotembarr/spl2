@@ -15,5 +15,6 @@ public class MainTest {
     public void test() {
         CRMSRunner dut = new CRMSRunner("/home/rotem/projects/spl2/example_input.json");
         dut.run();
+        dut.log("/home/rotem/projects/spl2/output.json");
     }
 }

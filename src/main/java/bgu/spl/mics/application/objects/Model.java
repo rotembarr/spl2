@@ -1,5 +1,8 @@
 package bgu.spl.mics.application.objects;
 
+import com.google.gson.annotations.Expose;
+import com.google.gson.internal.Excluder;
+
 /**
  * Passive object representing a Deep Learning model.
  * Add all the fields described in the assignment as private fields.
@@ -7,15 +10,22 @@ package bgu.spl.mics.application.objects;
  */
 public class Model {
     // Types.
-    public enum Status {PRE_TRAINED, TRAINING, TRAINED, TESTED, PUBLISHED}
+    public enum Status {PRE_TRAINED, TRAINING, TRAINED, TESTED, PRE_PUBLISHED, PUBLISHED}
     public enum Result {NONE, GOOD, BAD}
 
     // Variables.
+    @Expose(serialize = true, deserialize = true)
     private String name; // Name of the model.
+    @Expose(serialize = true, deserialize = true)
+    private Status status;     
+    @Expose(serialize = true, deserialize = true)
     private Data data; // The data the model should train on.
-    private Student student; // The student which created the model.
-    private Status status; 
+    @Expose(serialize = true, deserialize = true)
     private Result result;
+    
+    @Expose(serialize = false, deserialize = false)
+    private Student student; // The student which created the model.
+    
 
     public Model(String name, Data data, Student student) {
         this.name = name;

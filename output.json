@@ -1,0 +1,230 @@
+{
+    "students": [
+        {
+            "name": "Simba",
+            "department": "Computer Science",
+            "status": "MSc",
+            "publications": 1,
+            "papersRead": 2,
+            "modelsToTrain": [
+                {
+                    "name": "LessEfficientNet",
+                    "status": "PRE_TRAINED",
+                    "data": {
+                        "type": "Images",
+                        "size": 20000
+                    },
+                    "result": "NONE"
+                },
+                {
+                    "name": "DensestNet",
+                    "status": "PRE_TRAINED",
+                    "data": {
+                        "type": "Images",
+                        "size": 200000
+                    },
+                    "result": "NONE"
+                }
+            ],
+            "publishedModels": [
+                {
+                    "name": "YOLO10",
+                    "status": "PUBLISHED",
+                    "data": {
+                        "type": "Images",
+                        "size": 200000
+                    },
+                    "result": "GOOD"
+                }
+            ],
+            "unpublishedTestedModels": []
+        },
+        {
+            "name": "Zazu",
+            "department": "EE",
+            "status": "PhD",
+            "publications": 0,
+            "papersRead": 3,
+            "modelsToTrain": [],
+            "publishedModels": [],
+            "unpublishedTestedModels": []
+        },
+        {
+            "name": "Pumba",
+            "department": "Computer Science",
+            "status": "PhD",
+            "publications": 1,
+            "papersRead": 2,
+            "modelsToTrain": [
+                {
+                    "name": "GPT5",
+                    "status": "PRE_TRAINED",
+                    "data": {
+                        "type": "Text",
+                        "size": 200000
+                    },
+                    "result": "NONE"
+                },
+                {
+                    "name": "GPT10",
+                    "status": "PRE_TRAINED",
+                    "data": {
+                        "type": "Text",
+                        "size": 50000
+                    },
+                    "result": "NONE"
+                }
+            ],
+            "publishedModels": [
+                {
+                    "name": "Bert",
+                    "status": "PUBLISHED",
+                    "data": {
+                        "type": "Text",
+                        "size": 1000000
+                    },
+                    "result": "GOOD"
+                }
+            ],
+            "unpublishedTestedModels": []
+        },
+        {
+            "name": "Timon",
+            "department": "SE",
+            "publications": 0,
+            "papersRead": 3,
+            "modelsToTrain": [
+                {
+                    "name": "GNN",
+                    "status": "PRE_TRAINED",
+                    "data": {
+                        "type": "Tabular",
+                        "size": 1000000
+                    },
+                    "result": "NONE"
+                },
+                {
+                    "name": "MoreStyleGAN",
+                    "status": "PRE_TRAINED",
+                    "data": {
+                        "type": "Images",
+                        "size": 100000
+                    },
+                    "result": "NONE"
+                },
+                {
+                    "name": "ConditionalGAN",
+                    "status": "PRE_TRAINED",
+                    "data": {
+                        "type": "Images",
+                        "size": 500000
+                    },
+                    "result": "NONE"
+                }
+            ],
+            "publishedModels": [],
+            "unpublishedTestedModels": []
+        },
+        {
+            "name": "Nala",
+            "department": "Computer Science",
+            "status": "PhD",
+            "publications": 1,
+            "papersRead": 2,
+            "modelsToTrain": [],
+            "publishedModels": [
+                {
+                    "name": "YOLO9000",
+                    "status": "PUBLISHED",
+                    "data": {
+                        "type": "Images",
+                        "size": 100000
+                    },
+                    "result": "GOOD"
+                }
+            ],
+            "unpublishedTestedModels": []
+        }
+    ],
+    "conferences": [
+        {
+            "name": "ICML",
+            "date": 2000,
+            "publications": [
+                {
+                    "name": "YOLO9000",
+                    "status": "PUBLISHED",
+                    "data": {
+                        "type": "Images",
+                        "size": 100000
+                    },
+                    "result": "GOOD"
+                }
+            ]
+        },
+        {
+            "name": "NeurIPS",
+            "date": 2500,
+            "publications": []
+        },
+        {
+            "name": "CVPR",
+            "date": 3000,
+            "publications": [
+                {
+                    "name": "Bert",
+                    "status": "PUBLISHED",
+                    "data": {
+                        "type": "Text",
+                        "size": 1000000
+                    },
+                    "result": "GOOD"
+                }
+            ]
+        },
+        {
+            "name": "ECCV",
+            "date": 4000,
+            "publications": [
+                {
+                    "name": "YOLO10",
+                    "status": "PUBLISHED",
+                    "data": {
+                        "type": "Images",
+                        "size": 200000
+                    },
+                    "result": "GOOD"
+                }
+            ]
+        },
+        {
+            "name": "AISTATS",
+            "date": 7500,
+            "publications": [
+                {
+                    "name": "VIT2",
+                    "status": "PRE_PUBLISHED",
+                    "data": {
+                        "type": "Images",
+                        "size": 1000000
+                    },
+                    "result": "GOOD"
+                },
+                {
+                    "name": "MuchMoreEfficientNet",
+                    "status": "PRE_PUBLISHED",
+                    "data": {
+                        "type": "Images",
+                        "size": 20000
+                    },
+                    "result": "GOOD"
+                }
+            ]
+        }
+    ],
+    "gpusTimeUsed": 9123,
+    "gpusTimePass": 22000,
+    "cpusTimeUsed": 21988,
+    "cpusTimePass": 22000,
+    "batchesProcessed": 5853
+}

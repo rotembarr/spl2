@@ -27,6 +27,11 @@ public class ConferenceService extends MicroService {
         this.confrenceInformation = new ConfrenceInformation(name, date); 
     }
 
+    public ConfrenceInformation getInformation() {
+        return this.confrenceInformation;
+    }
+
+    
     @Override
     protected void initialize() {
         super.initialize();
@@ -34,20 +39,21 @@ public class ConferenceService extends MicroService {
         super.<Model, PublishResultEvent>subscribeEvent(PublishResultEvent.class, new Callback<PublishResultEvent>() {
             public void call(PublishResultEvent p) {
                 Model model = p.getModel();
-                model.setStatus(Model.Status.PUBLISHED);
+                model.setStatus(Model.Status.PRE_PUBLISHED);
                 confrenceInformation.addModel(model);
                 complete(p, model);
             }
         });
 
         super.<TickBroadcast>subscribeBroadcast(TickBroadcast.class, new Callback<TickBroadcast>() {
+            int cnt = 0;
             public void call(TickBroadcast t) {
 
                 // Tick system.
-                confrenceInformation.advanceCnt();
+                this.cnt++;
 
                 // Send broadcast and finish the job.
-                if (confrenceInformation.dateHasCome()) {
+                if (this.cnt >= confrenceInformation.getDate()) {
                     PublishConferenceBroadcast p = new PublishConferenceBroadcast(confrenceInformation.getModels());
                     sendBroadcast(p);
                     terminate();

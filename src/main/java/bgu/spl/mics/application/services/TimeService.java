@@ -4,6 +4,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import bgu.spl.mics.MicroService;
+import bgu.spl.mics.application.messages.TerminateBroadcast;
 import bgu.spl.mics.application.messages.TickBroadcast;
 
 /**
@@ -33,6 +34,7 @@ public class TimeService extends MicroService{
 		
 		// Create ticks.
 		Timer timer = new Timer();
+		
 		timer.schedule(new TimerTask() {
 			int timeCnt = 0;
 			
@@ -41,13 +43,14 @@ public class TimeService extends MicroService{
 				sendBroadcast(new TickBroadcast());
 				timeCnt++;
 				
-				// if (timeCnt >= duration) {
-					// 	sendBroadcast(new TerminateBroadcast());
-					// System.out.println(timeCnt); // TODO
-					// timer.cancel();
-				// }
+				if (timeCnt >= duration) {
+
+					System.out.println("Time service call shut down at " + timeCnt + " clocks");
+					sendBroadcast(new TerminateBroadcast());
+
+					timer.cancel();
+				}
 			}
 		}, duration, clockFreq);
-
 	}
 }

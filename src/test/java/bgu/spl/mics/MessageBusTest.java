@@ -376,13 +376,35 @@ public class MessageBusTest extends MessageBusImpl {
         String[] stringTest={"10"};
         MicroService M= new ExampleBroadcastListenerService("mor",stringTest);
         MicroService M1= new ExampleBroadcastListenerService("mor",stringTest);
+        MicroService M2= new ExampleBroadcastListenerService("mor",stringTest);
+
         super.unregister(M1);//check if we can unregister a microservice without register it first
+
         super.register(M);
+        super.subscribeBroadcast(ExampleBroadcast.class, M);
         assertTrue(super.isRegister(M));
+        assertTrue(super.isSubscribedBroadcast(ExampleBroadcast.class, M));
+        super.register(M2);
+        super.subscribeBroadcast(ExampleBroadcast2.class, M2);
+        assertTrue(super.isRegister(M2));
+        assertFalse(super.isSubscribedBroadcast(ExampleBroadcast.class, M2));
+        assertTrue(super.isSubscribedBroadcast(ExampleBroadcast2.class, M2));
+
         super.unregister(M);
         assertFalse(super.isRegister(M));
+        assertFalse(super.isSubscribedBroadcast(ExampleBroadcast.class, M));
+        assertTrue(super.isRegister(M2));
+        assertTrue(super.isSubscribedBroadcast(ExampleBroadcast2.class, M2));
         super.unregister(M);
         assertFalse(super.isRegister(M));
+        assertFalse(super.isSubscribedBroadcast(ExampleBroadcast.class, M));
+        assertTrue(super.isRegister(M2));
+        assertTrue(super.isSubscribedBroadcast(ExampleBroadcast2.class, M2));
+        super.unregister(M2);
+        assertFalse(super.isRegister(M));
+        assertFalse(super.isSubscribedBroadcast(ExampleBroadcast.class, M));
+        assertFalse(super.isRegister(M2));
+        assertFalse(super.isSubscribedBroadcast(ExampleBroadcast2.class, M2));
     }
     
     @Test

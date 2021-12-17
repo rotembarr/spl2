@@ -34,6 +34,10 @@ public class GPUService extends MicroService {
         this.trainEvents = new LinkedList<TrainModelEvent>();
     }
 
+    public GPU getGpu() {
+        return this.gpu;
+    }
+
     @Override
     protected void initialize() {
         super.initialize();

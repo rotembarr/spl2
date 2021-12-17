@@ -1,15 +1,20 @@
 package bgu.spl.mics.application;
 
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import com.google.gson.annotations.Expose;
 
+import bgu.spl.mics.application.objects.ConfrenceInformation;
 import bgu.spl.mics.application.objects.Data;
 import bgu.spl.mics.application.objects.GPU;
 import bgu.spl.mics.application.objects.Model;
@@ -61,12 +66,30 @@ public class CRMSRunner {
         public int Duration;
     }
 
-    public CRMSRunner(String jsonFilePath) {
+    private class JsonStatistics {
+        @Expose(serialize = true, deserialize = true)
+        public List<Student> students;        
+        @Expose(serialize = true, deserialize = true)
+        public List<ConfrenceInformation> conferences;
+        @Expose(serialize = true, deserialize = true)
+        public int gpusTimeUsed;
+        @Expose(serialize = true, deserialize = true)
+        public int gpusTimePass;
+        @Expose(serialize = true, deserialize = true)
+        public int cpusTimeUsed;
+        @Expose(serialize = true, deserialize = true)
+        public int cpusTimePass;
+        @Expose(serialize = true, deserialize = true)
+        public int batchesProcessed;
+    }
+
+
+    public CRMSRunner(String inputJsonFilePath) {
         JsonInformation jsonInformation = null;
         Gson gson = new Gson();
 
         // Parse json into JsonInformation.
-        try (Reader reader = new FileReader(jsonFilePath)) {
+        try (Reader reader = new FileReader(inputJsonFilePath)) {
             JsonParser parser = new JsonParser();
             JsonElement jsonElement = parser.parse(reader);
             jsonInformation = gson.fromJson(jsonElement.toString(), JsonInformation.class);
@@ -185,6 +208,44 @@ public class CRMSRunner {
     }
     
 
+    /**
+     * Output result
+     * 
+     */
+    public void log(String outputJsonFilePath) {
+        JsonStatistics jsonStatistics = new JsonStatistics();
+
+        jsonStatistics.students = new LinkedList<Student>();
+        for (int i = 0; i < this.studentServices.size(); i++) {
+            jsonStatistics.students.add(this.studentServices.get(i).getStudent());
+        }
+        jsonStatistics.conferences = new LinkedList<ConfrenceInformation>();
+        for (int i = 0; i < this.conferenceServices.size(); i++) {
+            jsonStatistics.conferences.add(this.conferenceServices.get(i).getInformation());
+        }
+        for (int i = 0; i < this.gpuServices.size(); i++) {
+            jsonStatistics.gpusTimeUsed += this.gpuServices.get(i).getGpu().getNumOfTimeUsed();
+            jsonStatistics.gpusTimePass += this.gpuServices.get(i).getGpu().getNumOfTimePass();
+        }            
+        for (int i = 0; i < this.cpuServices.size(); i++) {
+            jsonStatistics.cpusTimeUsed += this.cpuServices.get(i).getCpu().getNumOfTimeUsed();
+            jsonStatistics.cpusTimePass += this.cpuServices.get(i).getCpu().getNumOfTimePass();
+            jsonStatistics.batchesProcessed += this.cpuServices.get(i).getCpu().getNumOfProcessedBatches();
+        } 
+
+        
+        try (FileWriter writer = new FileWriter(outputJsonFilePath)) {
+            
+            Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+            // Gson gson = new Gson();
+            gson.toJson(jsonStatistics, writer);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+    }
 
     /**
      * Run
@@ -207,13 +268,12 @@ public class CRMSRunner {
 
     public static void main(String[] args) {
 
-        // if (args.length != 1) {
+        // if (args.length != 2) {
         //     System.exit(1);
         // }
         // CRMSRunner crmsRunner = new CRMSRunner(args[0]);
 
         CRMSRunner crmsRunner = new CRMSRunner("/home/rotem/projects/spl2/example_input.json");
         crmsRunner.run();
-        System.out.println("Hello World!");
     }
 }

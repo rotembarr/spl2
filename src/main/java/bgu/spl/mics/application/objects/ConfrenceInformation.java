@@ -3,22 +3,27 @@ package bgu.spl.mics.application.objects;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.google.gson.annotations.Expose;
+
 /**
  * Passive object representing information on a conference.
  * Add fields and methods to this class as you see fit (including public methods and constructors).
  */
 public class ConfrenceInformation {
-
-    private List<Model> modelsToPublish;
+    
+    @Expose(serialize = true, deserialize = true)
     private String name;
+
+    @Expose(serialize = true, deserialize = true)
     private int date;
-    private int cnt;
+
+    @Expose(serialize = true, deserialize = true)
+    private List<Model> publications;
 
     public ConfrenceInformation(String name, int date) {
-        this.modelsToPublish = new LinkedList<Model>();
+        this.publications = new LinkedList<Model>();
         this.name = name;
         this.date = date;
-        this.cnt = 0;
     }
 
     public String getName() {
@@ -29,19 +34,11 @@ public class ConfrenceInformation {
         return this.date;
     }
 
-    public void advanceCnt() {
-        this.cnt++;
-    }
-
-    public boolean dateHasCome() {
-        return this.cnt >= this.date;
-    }
-
     public void addModel(Model model) {
-        this.modelsToPublish.add(model);
+        this.publications.add(model);
     }
 
     public List<Model> getModels() {
-        return this.modelsToPublish;
+        return this.publications;
     }
 }

@@ -2,6 +2,7 @@ package bgu.spl.mics;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -42,7 +43,7 @@ public class MessageBusImpl implements MessageBus {
 	 * Sole constructor.
 	 * @return
 	 */
-	public MessageBusImpl() {
+	protected MessageBusImpl() {
 		this.serviceToMesssageMap = new HashMap<MicroService, List<Class<? extends Message>> >();
 		this.serviceToQueueMap = new HashMap<MicroService, BlockingQueue<Message>>();
 		this.eventToFutureMap = new HashMap<Event<?>, Future<?>>();
@@ -144,8 +145,6 @@ public class MessageBusImpl implements MessageBus {
 			this.eventToServiceMap.put(type, list);
 		}
 		list.add(m);
-		// System.out.println(type);
-		// System.out.println(list.size());
 	}
 
 	/**
@@ -222,12 +221,12 @@ public class MessageBusImpl implements MessageBus {
 	public synchronized <T> Future<T> sendEvent(Event<T> e) {
 		if (e == null || this.eventToFutureMap.containsKey(e)) {
 			return null;
-		} // TODO
+		} 
 
 
 		if (!this.eventToServiceMap.containsKey(e.getClass())) {
 			return null;
-		} // TODO
+		} 
 
 		// Create future.
 		Future<T> future = new Future<T>();
@@ -235,9 +234,6 @@ public class MessageBusImpl implements MessageBus {
 		
 		// Send the event to one of the queues and advance round robbin counter.
 		RoundRobbinArrayList<MicroService> list = this.eventToServiceMap.get(e.getClass());
-		// System.out.println(e);
-		// System.out.println(e.getClass());
-		// System.out.println(list.size());
 		this.serviceToQueueMap.get(list.next()).add(e);
 
 		return future;
@@ -278,30 +274,49 @@ public class MessageBusImpl implements MessageBus {
 
 
 		// Remove m's futures.
-		Set<Event<?>> eventSet = eventToFutureMap.keySet();
-		for (Iterator<Event<?>> iter = eventSet.iterator(); iter.hasNext();) {
-			Event<?> event = iter.next();
-			// TODO - need to delete.
+		{
+			Set<Event<?>> eventSet = eventToFutureMap.keySet();
+			for (Iterator<Event<?>> iter = eventSet.iterator(); iter.hasNext();) {
+				Event<?> event = iter.next();
+				// TODO - need to delete.
+			}
 		}
 
 		// Remove m's events subsribtion.
-		Collection<RoundRobbinArrayList<MicroService>> allEventsMicroServices = this.eventToServiceMap.values();
-		for (Iterator<RoundRobbinArrayList<MicroService>> iter = allEventsMicroServices.iterator(); iter.hasNext();) {
-			RoundRobbinArrayList<MicroService> list = iter.next();
+		{
+			Set<Class<? extends Message>> eventSet = eventToServiceMap.keySet();
+			for (Iterator<Class<? extends Message>> iter = eventSet.iterator(); iter.hasNext();) {
+				Class<? extends Message> type = null;
+				try {
+					type = iter.next();
+				} catch (ConcurrentModificationException e) {
+					e.printStackTrace();
+				}
 
-			// Remove from list.
-			if (list.contains(m)) {
-				list.remove(m);
+				RoundRobbinArrayList<MicroService> list = this.eventToServiceMap.get(type);
+
+				if (list.contains(m)) {
+					list.remove(m);
+	
+					if (list.size() == 0) {
+						iter.remove();
+					}
+				}
 			}
-
-			// TODO
 		}
-
+		
 		// Remove m's broadcast subsribtion.
-		Collection<List<MicroService>> allBroadcastsMicroServices = this.broadcastToServiceMap.values();
-		for (Iterator<List<MicroService>> iter = allBroadcastsMicroServices.iterator(); iter.hasNext();) {
-			List<MicroService> list = iter.next();
-			list.remove(m); // Remove from list (if exists).
+		{
+			Set<Class<? extends Message>> eventSet = broadcastToServiceMap.keySet();
+			for (Iterator<Class<? extends Message>> iter = eventSet.iterator(); iter.hasNext();) {
+				Class<? extends Message> type = iter.next();
+				List<MicroService> list = this.broadcastToServiceMap.get(type);
+
+				list.remove(m); 
+				if (list.size() == 0) {
+					iter.remove();
+				}
+			}
 		}
 	}
 

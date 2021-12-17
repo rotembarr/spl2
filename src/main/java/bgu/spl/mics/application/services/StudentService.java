@@ -49,14 +49,18 @@ public class StudentService extends MicroService {
         // Tick Broadcast.
         super.<TickBroadcast>subscribeBroadcast(TickBroadcast.class, new Callback<TickBroadcast>() {
             Future<Model> future = null;
+            int cnt = 0;
             public void call(TickBroadcast c) {
-                
+                cnt++;
+
                 // Send model to train
                 if (future == null) {
                     if (!student.modelQueueEmpty()) {
-                        System.out.println("Model sent from student - " + student.getName());
-
                         future = sendEvent(new TrainModelEvent(student, student.getModelToTrain()));
+
+                        if (future == null) {
+                            throw new InternalError("Sending trainModelEvent failed"  + " at " + cnt + "clocks");
+                        }
                     }
                 } 
 
@@ -68,11 +72,17 @@ public class StudentService extends MicroService {
                         Model model = future.get();
                         if (model.getStatus() == Model.Status.TRAINED) { // Next thing is testing,
                             future = sendEvent(new TestModelEvent(student, model));
+                            if (future == null) {
+                                throw new InternalError("Sending testModelEvent failed" + " at " + cnt + "clocks");
+                            }
+
                         } else if (model.getStatus() == Model.Status.TESTED) {
                             future = sendEvent(new PublishResultEvent(student, future.get()));
-                        } else if (model.getStatus() == Model.Status.PUBLISHED) {
-                            System.out.println("Model " + model.getName() + "published by student - " + student.getName());
-
+                            
+                            if (future == null) {
+                                student.addModelThatCouldntPublish(model);
+                            }
+                        } else if (model.getStatus() == Model.Status.PRE_PUBLISHED) {
                             future = null;
                         } else {
                             throw new InternalError();

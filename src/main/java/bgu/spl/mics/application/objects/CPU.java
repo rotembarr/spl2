@@ -21,16 +21,9 @@ public class CPU {
     int processingCnt;
 
     // Statistics.
-    private long nOfProcessedBatches;
-    private long nOfTimeUsed;
-
-
-    // public CPU(CPU other) {
-    //     this.nCores = other.nCores;
-    //     this.cluster = Cluster.getInstance();
-    //     this.batches = null;
-
-    // }
+    private int nOfProcessedBatches;
+    private int nTimePass;
+    private int nTimeUsed;
 
     /**
      * Constructor.
@@ -46,7 +39,8 @@ public class CPU {
         this.isProcessing = false;
         this.processingCnt = 0;
         this.nOfProcessedBatches = 0;
-        this.nOfTimeUsed = 0;
+        this.nTimePass = 0;
+        this.nTimeUsed++;
     }
     
     /**
@@ -63,7 +57,7 @@ public class CPU {
         this.isProcessing = false;
         this.processingCnt = 0;
         this.nOfProcessedBatches = 0;
-        this.nOfTimeUsed = 0;
+        this.nTimePass = 0;
     }
 
     /**
@@ -90,13 +84,24 @@ public class CPU {
 
     /**
      * Return number of ticks happends.
+     * @return this.nTimePass
+     * 
+     * @pre none
+     * @post trivial
+     */
+    public int getNumOfTimePass() {
+        return this.nTimePass;
+    }
+
+    /**
+     * Return number of ticks CPU processed.
      * @return this.nOfTimeUsed
      * 
      * @pre none
      * @post trivial
      */
-    public long getNumOfTimeUsed() {
-        return this.nOfTimeUsed;
+    public int getNumOfTimeUsed() {
+        return this.nTimeUsed;
     }
 
     /**
@@ -106,7 +111,7 @@ public class CPU {
      * @pre none.
      * @post trivial
      */
-    public long getNumOfProcessedBatches() {
+    public int getNumOfProcessedBatches() {
         return this.nOfProcessedBatches;
     }
 
@@ -233,8 +238,11 @@ public class CPU {
      * @post all of the above
      */
     public void tickSystem() {
-        this.nOfTimeUsed++;
+        this.nTimePass++;
         this.processingCnt++;
+        if (this.isProcessing) {
+            this.nTimeUsed++;
+        }
 
         try {
 
