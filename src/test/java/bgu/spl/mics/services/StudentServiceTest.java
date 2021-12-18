@@ -13,6 +13,7 @@ import org.junit.Test;
 import bgu.spl.mics.Callback;
 import bgu.spl.mics.MessageBusImpl;
 import bgu.spl.mics.MicroService;
+import bgu.spl.mics.application.messages.PublishConferenceBroadcast;
 import bgu.spl.mics.application.messages.PublishResultEvent;
 import bgu.spl.mics.application.messages.TestModelEvent;
 import bgu.spl.mics.application.messages.TickBroadcast;
@@ -22,6 +23,7 @@ import bgu.spl.mics.application.objects.Model;
 import bgu.spl.mics.application.objects.Student;
 import bgu.spl.mics.application.objects.Model.Status;
 import bgu.spl.mics.application.services.StudentService;
+import bgu.spl.mics.application.services.TimeService;
 import bgu.spl.mics.example.ExampleMicroService;
 
 public class StudentServiceTest {
@@ -71,6 +73,18 @@ public class StudentServiceTest {
                 @Override
                 public void call(TestModelEvent c) {
                     c.getModel().setStatus(Model.Status.TESTED);
+
+                    
+                    // Testing (pay attention to <).
+                    int chance = 50;
+                    boolean answer = ((int)(Math.random() * 100)) < chance ? true : false;                    
+                    if (answer) {
+                        c.getModel().setResult(Model.Result.GOOD);
+                    } else {
+                        c.getModel().setResult(Model.Result.BAD);
+                    }
+                    c.getModel().setStatus(Model.Status.TESTED);
+            
                     complete(c, c.getModel());
                     numOfMessages++;
                 }
@@ -96,8 +110,11 @@ public class StudentServiceTest {
             subscribeEvent(PublishResultEvent.class, new Callback<PublishResultEvent>() {
                 @Override
                 public void call(PublishResultEvent c) {
-                    c.getModel().setStatus(Model.Status.PUBLISHED);
+                    c.getModel().setStatus(Model.Status.PRE_PUBLISHED);
                     complete(c, c.getModel());
+                    List<Model> modelsToPublish = new LinkedList<Model>();
+                    modelsToPublish.add(c.getModel());
+                    sendBroadcast(new PublishConferenceBroadcast(modelsToPublish));
                     numOfMessages++;
                 }
             });
@@ -126,25 +143,14 @@ public class StudentServiceTest {
             studentServiceArr.add(studentService);            
         }
 
+        List<Thread> studentThreadArr = new LinkedList<Thread>();
         for (int i = 0; i < studentServiceArr.size(); i++) {
             Thread studentThread = new Thread(studentServiceArr.get(i));
+            studentThreadArr.add(studentThread); 
             studentThread.start();
         }
 
-        // Tick.
-        Thread tickThread = new Thread(() -> {
-            for (int i =0; i < 10 *nMessages; i++) {
-                try {
-                    Thread.currentThread().sleep(milisec);
-                    messageBus.sendBroadcast(new TickBroadcast());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }    
-            }    
-        });            
-        tickThread.start();
         
-
         // Validation.
         DemeTrainMicroService trainService = new DemeTrainMicroService("train");
         DemeTestMicroService testService = new DemeTestMicroService("test");
@@ -155,12 +161,30 @@ public class StudentServiceTest {
         trainThread.start();
         testThread.start();
         publishThread.start();
-
+        
+        // Tick.
+        TimeService timeService = new TimeService("time", milisec, nStudents*nMessages);
+        Thread tickThread = new Thread(timeService);
+        tickThread.start();
+        
         try {
             tickThread.join();
+            for(int i = 0; i < studentThreadArr.size(); i++) {
+                studentThreadArr.get(i).join();
+            }
             assertEquals(nMessages*nStudents, trainService.getMsgCnt());
             assertEquals(nMessages*nStudents, testService.getMsgCnt());
-            assertEquals(nMessages*nStudents, publishService.getMsgCnt());
+
+            int cnt = 0;
+            for (int i = 0; i < studentServiceArr.size(); i++) {
+                cnt += studentServiceArr.get(i).getStudent().getPublications();
+            }
+            assertEquals(cnt, publishService.getMsgCnt());
+            
+            for (int i = 0; i < studentServiceArr.size(); i++) {
+                int cnt2 = studentServiceArr.get(i).getStudent().getPaperRead() + studentServiceArr.get(i).getStudent().getPublications();
+                assertEquals(cnt2, publishService.getMsgCnt());
+            }
         } catch (Exception e) {
             e.printStackTrace();;
         }
@@ -173,6 +197,6 @@ public class StudentServiceTest {
     // }
     @Test
     public void test_100Student() {
-        testCore(100, 100, 8);
+        testCore(30, 100, 8);
     }
 }

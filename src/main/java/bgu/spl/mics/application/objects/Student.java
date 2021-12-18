@@ -84,7 +84,7 @@ public class Student {
     }
 
     public Model getModelToTrain() {
-        return this.modelsToTrain.remove(0);
+        return  this.modelsToTrain.remove(0);
     }
 
     public void addModelThatCouldntPublish(Model model) {

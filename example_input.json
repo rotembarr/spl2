@@ -76,7 +76,7 @@
         {
             "name": "Timon",
             "department": "SE",            
-            "status": "MsC",
+            "status": "MSc",
             "models":
             [
                 {
@@ -136,12 +136,12 @@
     "CPUS": [32,32,32,16,16,16,16],
     "Conferences":
     [
-        {"name": "ICML", "date": 2000},
-        {"name": "NeurIPS", "date": 2500},
-        {"name": "CVPR", "date": 3000},
-        {"name": "ECCV", "date": 4000},
-        {"name": "AISTATS", "date": 7500}
+        {"name": "ICML", "date": 20000},
+        {"name": "NeurIPS", "date": 25000},
+        {"name": "CVPR", "date": 30000},
+        {"name": "ECCV", "date": 40000},
+        {"name": "AISTATS", "date": 50000}
     ],
-    "TickTime": 10,
-    "Duration": 5500
+    "TickTime": 1,
+    "Duration": 55000
 }

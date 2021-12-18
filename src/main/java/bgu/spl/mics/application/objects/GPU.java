@@ -182,7 +182,7 @@ public class GPU {
         } 
 
         // Testing (pay attention to <).
-        boolean answer = ((int)Math.random() * 100) < chance ? true : false;
+        boolean answer = ((int)(Math.random() * 100)) < chance ? true : false;
         if (answer) {
             model.setResult(Model.Result.GOOD);
         } else {
@@ -213,6 +213,8 @@ public class GPU {
             throw new IllegalArgumentException();
         }
 
+        // System.out.println(model + " pip");
+        
         // Add model.
         this.modelsToTrain.add(model);
         this.modelNames.add(model.getName());

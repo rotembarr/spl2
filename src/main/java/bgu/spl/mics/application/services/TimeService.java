@@ -51,6 +51,6 @@ public class TimeService extends MicroService{
 					timer.cancel();
 				}
 			}
-		}, duration, clockFreq);
+		}, 1000, clockFreq);
 	}
 }

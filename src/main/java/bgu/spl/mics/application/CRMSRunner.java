@@ -161,28 +161,6 @@ public class CRMSRunner {
     }
 
     /**
-     * Interupt all threads
-     */
-    private void interuptAllThreads() {
-        
-        for (int i = 0; i < studentServices.size(); i++) {
-            this.studentThreads.get(i).interrupt();
-        }
-
-        for (int i = 0; i < gpuServices.size(); i++) {
-            this.gpuThreads.get(i).interrupt();
-        }    
-
-        for (int i = 0; i < gpuServices.size(); i++) {
-            this.cpuThreads.get(i).interrupt();
-        }
-
-        for (int i = 0; i < conferenceServices.size(); i++) {
-            this.conferenceThreads.get(i).interrupt();
-        }
-    }
-
-    /**
      * Join all threads
      */
     private void joinAllThreads() {
@@ -261,7 +239,6 @@ public class CRMSRunner {
             e.printStackTrace();
         }
 
-        this.interuptAllThreads();
         this.joinAllThreads();
 
     }

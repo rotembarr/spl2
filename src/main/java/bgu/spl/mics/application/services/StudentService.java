@@ -1,9 +1,5 @@
 package bgu.spl.mics.application.services;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Queue;
-
 import bgu.spl.mics.Callback;
 import bgu.spl.mics.Future;
 import bgu.spl.mics.MicroService;
@@ -12,7 +8,6 @@ import bgu.spl.mics.application.messages.PublishResultEvent;
 import bgu.spl.mics.application.messages.TestModelEvent;
 import bgu.spl.mics.application.messages.TickBroadcast;
 import bgu.spl.mics.application.messages.TrainModelEvent;
-import bgu.spl.mics.application.objects.Data;
 import bgu.spl.mics.application.objects.Model;
 import bgu.spl.mics.application.objects.Student;
 
@@ -56,7 +51,9 @@ public class StudentService extends MicroService {
                 // Send model to train
                 if (future == null) {
                     if (!student.modelQueueEmpty()) {
-                        future = sendEvent(new TrainModelEvent(student, student.getModelToTrain()));
+                        Model model = student.getModelToTrain();
+                        // System.out.println(model + " dalle");
+                        future = sendEvent(new TrainModelEvent(student, model));
 
                         if (future == null) {
                             throw new InternalError("Sending trainModelEvent failed"  + " at " + cnt + "clocks");
@@ -77,15 +74,29 @@ public class StudentService extends MicroService {
                             }
 
                         } else if (model.getStatus() == Model.Status.TESTED) {
-                            future = sendEvent(new PublishResultEvent(student, future.get()));
-                            
-                            if (future == null) {
+
+                            // System.out.println(model.getName() + " " + model.getResult());
+                            // Send Event.
+                            if (model.getResult() == Model.Result.GOOD) {
+                                future = sendEvent(new PublishResultEvent(student, future.get()));
+                                
+                                // TODO - change
+                                future = null;
+
+                                // if (future == null) {
+                                //     student.addModelThatCouldntPublish(model);
+                                // }
+                            } else {
                                 student.addModelThatCouldntPublish(model);
+                                future = null;
                             }
+                            
                         } else if (model.getStatus() == Model.Status.PRE_PUBLISHED) {
                             future = null;
+                        } else if (model.getStatus() == Model.Status.PUBLISHED) { // if somehow we get a publishconferencebroadcast before the next tick
+                            future = null;
                         } else {
-                            throw new InternalError();
+                            throw new InternalError("model status is " + model.getStatus());
                         }
                     }
                 }
