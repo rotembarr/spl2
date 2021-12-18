@@ -62,8 +62,8 @@ public class DataBatch {
 
 
     /**
-     * Returns if the batch has processed;
-     * @return this.doneProcessing.
+     * Returns if the batch has trained
+     * @return this.doneTraining.
      * 
      * @pre none
      * @post trivial
@@ -71,14 +71,20 @@ public class DataBatch {
     public boolean isDoneTraining() {
         return this.doneTraining;
     }
-
+    /**
+     * @pre none
+     * @post isDoneProcessing()==True
+     */
     public void setAsProcessed() {
         this.doneProcessing = true;
         this.data.batchProcessed();
     }
-
+    /**
+     * @pre none
+     * @post isDoneTraining()==True
+     */
     public void setAsTrained() {
-        this.doneProcessing = true;
+        this.doneTraining = true;
         this.data.batchTrained();
     }
 

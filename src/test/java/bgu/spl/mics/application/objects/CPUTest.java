@@ -2,7 +2,6 @@ package bgu.spl.mics.application.objects;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
 
 import java.util.LinkedList;
 import java.util.Queue;
@@ -42,14 +41,14 @@ public class CPUTest extends CPU{
     @Test 
     public void TestGetNuomOfTimePass() {
         // Has to be 0 at first.
-        assertEquals(0, super.getNumOfTimeUsed());
+        assertEquals(0, super.getNumOfTimePass());
 
         // advance random time.
         int n = (int)(Math.random()*(100)) + 1;
         for (int i = 0; i < n; i++) {
             super.tickSystem();
         }
-        assertEquals(n, super.getNumOfTimeUsed());
+        assertEquals(n, super.getNumOfTimePass());
     }
 
     @Test 
@@ -222,7 +221,7 @@ public class CPUTest extends CPU{
         }
         assertEquals("Somehow batches sent to cluster when not need", 0, this.cluster.getNumOfBatchesProcessedByCPUs());
         assertEquals("Somehow batches proceseed", 0, super.getNumOfProcessedBatches());
-        assertEquals("Somehow batches proceseed", 100, super.getNumOfTimeUsed());
+        assertEquals("time hasnt advanced", 100, super.getNumOfTimePass());
     }
 
     @Test

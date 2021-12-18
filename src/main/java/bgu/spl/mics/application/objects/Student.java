@@ -78,15 +78,24 @@ public class Student {
     public boolean modelQueueEmpty() {
         return this.modelsToTrain.size() == 0;
     }
-
+    /**
+     * @pre none
+     * @post this.modelsToTrain= pre this.modelsToTrain+1
+     */
     public void addModelToTrain(Model model) {
         this.modelsToTrain.add(model);
     }
-
+    /**
+     * @pre none
+     * @post this.modelsToTrain= pre this.modelsToTrain-1
+     */
     public Model getModelToTrain() {
-        return  this.modelsToTrain.remove(0);
+        return this.modelsToTrain.remove(0);
     }
-
+    /**
+     * @pre none
+     * @post this.unpublishedTestedModels= pre this.unpublishedTestedModels+1
+     */
     public void addModelThatCouldntPublish(Model model) {
         this.unpublishedTestedModels.add(model);
     }

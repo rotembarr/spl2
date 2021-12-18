@@ -34,7 +34,10 @@ public class Model {
         this.status = Status.PRE_TRAINED;
         this.result = Result.NONE;
     }
-
+    /**
+     * @pre none
+     * @post this.getStatus=status
+     */
     public void setStatus(Status status) {
         this.status = status;
     }
@@ -45,7 +48,10 @@ public class Model {
     public Data getData() {
         return this.data;
     }
-
+    /**
+     * @pre none
+     * @post this.getResult=result
+     */
     public void setResult(Result result) {
         this.result = result;
     }

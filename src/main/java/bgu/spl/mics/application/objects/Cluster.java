@@ -42,6 +42,9 @@ public class Cluster {
 	/**
 	 * Add GPU
 	 * @param gpu
+	 * @pre none
+	 * @post gpus=pre gpus+1
+	 *
 	 */
 	public void addGPU(GPU gpu) {
 		if (gpu == null) {
@@ -52,7 +55,13 @@ public class Cluster {
 		Queue<DataBatch> queue = new ArrayBlockingQueue<DataBatch>(GPU.MAX_PROCESSED_DATA_BATCH_STORED + 1);
 		this.gpuToProcessedBatchMap.put(gpu, queue);
 	}
-
+	/**
+	 * Add CPU
+	 * @param cpu
+	 * @pre none
+	 * @post cpus=pre cpus+1
+	 *
+	 */
 	public void addCPU(CPU cpu) {
 		if (cpu == null) {
 			return;
@@ -75,25 +84,41 @@ public class Cluster {
 	public int getNumOfBatchesWaitingToProcess() {
 		return this.unprocessedBatches.size();
 	}
-
+	/**
+	 * @pre none
+	 * @post nOfBatchesProcessedByCPUs.get()==0;
+	 */
 	public void clearStatistics() {
 		this.nOfBatchesProcessedByCPUs.set(0); // TODO
 	}
-
+	/**
+	 * @pre none
+	 * @post unprocessedBatches.size()=pre unprocessedBatches.size()+1
+	 */
 	public void pushBatchToProcess(DataBatch batch){
 		this.unprocessedBatches.add(batch);
 	}
-
+	/**
+	 * @pre none
+	 * @post if exists, unprocessedBatches.size()=pre unprocessedBatches.size()-1
+	 */
 	public DataBatch popBatchToProcess(){
 		return this.unprocessedBatches.poll();
 	}
-
+	/**
+	 * @pre none
+	 * @post this.gpuToProcessedBatchMap.get(batch.getGPU().size()= pre this.gpuToProcessedBatchMap.get(batch.getGPU().size()+1
+	 * && nOfBatchesProcessedByCPUs= pre nOfBatchesProcessedByCPUs+1
+	 */
 	public void pushProcessedBatch(DataBatch batch){
 		Queue<DataBatch> queue = this.gpuToProcessedBatchMap.get(batch.getGPU());
 		queue.add(batch);
 		this.nOfBatchesProcessedByCPUs.incrementAndGet();
 	}
-
+	/**
+	 * @pre none
+	 * @post this.gpuToProcessedBatchMap.get(batch.getGPU().size()= pre this.gpuToProcessedBatchMap.get(batch.getGPU().size()-1
+	 */
 	public DataBatch popProcessedBatch(GPU gpu){
 		Queue<DataBatch> queue = this.gpuToProcessedBatchMap.get(gpu);
 		return queue.poll();

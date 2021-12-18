@@ -213,8 +213,6 @@ public class GPU {
             throw new IllegalArgumentException();
         }
 
-        // System.out.println(model + " pip");
-        
         // Add model.
         this.modelsToTrain.add(model);
         this.modelNames.add(model.getName());

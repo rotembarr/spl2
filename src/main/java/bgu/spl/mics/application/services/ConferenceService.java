@@ -20,7 +20,7 @@ import bgu.spl.mics.application.objects.Model;
 public class ConferenceService extends MicroService {
     
     // Variables.
-    ConfrenceInformation confrenceInformation = null;
+    private ConfrenceInformation confrenceInformation = null;
 
     public ConferenceService(String name, int date) {
         super(name);

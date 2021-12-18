@@ -1,6 +1,5 @@
 package bgu.spl.mics.services;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -12,24 +11,25 @@ import org.junit.Test;
 
 import bgu.spl.mics.Future;
 import bgu.spl.mics.MessageBusImpl;
+import bgu.spl.mics.application.messages.TerminateBroadcast;
 import bgu.spl.mics.application.messages.TickBroadcast;
 import bgu.spl.mics.application.messages.TrainModelEvent;
 import bgu.spl.mics.application.objects.Student;
+import bgu.spl.mics.application.objects.CPU;
 import bgu.spl.mics.application.objects.Data;
 import bgu.spl.mics.application.objects.GPU;
 import bgu.spl.mics.application.objects.Model;
 import bgu.spl.mics.application.services.CPUService;
-import bgu.spl.mics.application.services.ConferenceService;
 import bgu.spl.mics.application.services.GPUService;
-import bgu.spl.mics.example.ExampleMicroService;
 
 public class CPUandGPUTest {
     MessageBusImpl messageBus = null;
     
     @Before
     public void setUp() {
+        System.out.println("Cleaning messageBus");
         this.messageBus = MessageBusImpl.getInstance();
-
+        this.messageBus.clean();
     }
 
     public void testCore(int nCpus, int nGpus, int nMessages, int milisec) {
@@ -61,12 +61,17 @@ public class CPUandGPUTest {
         }
         
         
+        List<Thread> gpuThreads = new LinkedList<>();
         for (int i = 0; i < gpuServiceArr.size(); i++) {
             Thread gpuThread = new Thread(gpuServiceArr.get(i));
+            gpuThreads.add(gpuThread);
             gpuThread.start();
         }
+        
+        List<Thread> cpuThreads = new LinkedList<>();
         for (int i = 0; i < cpuServiceArr.size(); i++) {
             Thread cpuThread = new Thread(cpuServiceArr.get(i));
+            cpuThreads.add(cpuThread);
             cpuThread.start();
         }
 
@@ -119,31 +124,48 @@ public class CPUandGPUTest {
             Model modelAfter = futureArr.get(i).get();
             assertTrue("Model hasn't trained good", modelAfter.getStatus() == Model.Status.TRAINED);
         }
+
+        this.messageBus.sendBroadcast(new TerminateBroadcast());
+        try {
+            for (int i = 0; i < gpuThreads.size(); i++) {
+                gpuThreads.get(i).join();
+            }
+            for (int i = 0; i < cpuThreads.size(); i++) {
+                cpuThreads.get(i).join();
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
     }
 
     @Test
     public void test__oneGPU_oneCPU() {
+        System.out.println("running test__oneGPU_oneCPU");
         this.testCore(1,1,100, 1);
     }
 
     @Test
     public void test__5GPU_1CPU() {
+        System.out.println("running test__5GPU_1CPU");
         this.testCore(1, 5, 100, 5);
     }
 
     @Test
     public void test__1GPU_5CPU() {
+        System.out.println("running test__1GPU_5CPU");
         this.testCore(5, 1, 100, 1);
     }
     
     @Test
     public void test__8GPU_8CPU() {
+        System.out.println("running test__8GPU_8CPU");
         this.testCore(8, 8, 700, 1);
     }
 
-
     @Test
     public void test__20GPU_40CPU() {
+        System.out.println("running test__20GPU_40CPU");
         this.testCore(20, 40, 150, 5);
     }
 }

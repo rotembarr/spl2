@@ -100,6 +100,8 @@ public abstract class MicroService implements Runnable {
      * @param callback The callback that should be called when messages of type
      *                 {@code type} are taken from this micro-service message
      *                 queue.
+     * @pre none
+     * @post isSubscribedEvent(Class<E> type)==True
      */
     protected final <T, E extends Event<T>> void subscribeEvent(Class<E> type, Callback<E> callback) {
         if (this.messageToCallbackMap.containsKey(type)) {
@@ -129,6 +131,8 @@ public abstract class MicroService implements Runnable {
      * @param callback The callback that should be called when messages of type
      *                 {@code type} are taken from this micro-service message
      *                 queue.
+     * @pre none
+     * @post isSubscribedBroadcast(Class<B> type)==True
      */
     protected final <B extends Broadcast> void subscribeBroadcast(Class<B> type, Callback<B> callback) {
         if (this.messageToCallbackMap.containsKey(type)) {
@@ -150,6 +154,8 @@ public abstract class MicroService implements Runnable {
      * @return  		{@link Future<T>} object that may be resolved later by a different
      *         			micro-service processing this event.
      * 	       			null in case no micro-service has subscribed to {@code e.getClass()}.
+     * @pre {@code e}!=null
+     * @post sendEvent=pre sendEvent+1
      */
     protected final <T> Future<T> sendEvent(Event<T> e) {
         Future<T> future = this.messageBus.sendEvent(e);
@@ -162,6 +168,8 @@ public abstract class MicroService implements Runnable {
      * to all the services subscribed to it.
      * <p>
      * @param b The broadcast message to send
+     * @pre {@code b}!=null
+     * @post sendBroadcast=pre sendBroadcast+1
      */
     protected final void sendBroadcast(Broadcast b) {
         this.messageBus.sendBroadcast(b);
@@ -177,6 +185,8 @@ public abstract class MicroService implements Runnable {
      * @param e      The event to complete.
      * @param result The result to resolve the relevant Future object.
      *               {@code e}.
+     * @pre none
+     * @post completedEvent= pre completedEvent+1
      */
     protected final <T> void complete(Event<T> e, T result) {
         this.messageBus.complete(e, result);
@@ -185,6 +195,10 @@ public abstract class MicroService implements Runnable {
 
     /**
      * this method is called once when the event loop starts.
+     * @pre none
+     * @post messageBus.isRegister(this)==True&&
+     * this.isSubscribedBroadcast(TerminateBroadcast)==True
+     *
      */
     protected void initialize() {
         // Register to message bus.
@@ -202,6 +216,8 @@ public abstract class MicroService implements Runnable {
     /**
      * Signals the event loop that it must terminate after handling the current
      * message.
+     * @pre none
+     * @post messageBus.isRegister(this)==False && terminated=True
      */
     protected final void terminate() {
         // Unrigster this service from message bus and exit.
@@ -220,6 +236,14 @@ public abstract class MicroService implements Runnable {
     /**
      * The entry point of the micro-service. TODO: you must complete this code
      * otherwise you will end up in an infinite loop.
+     * @pre none
+     * @post before terminated:
+     *      messageBus.isRegister(this)==True&&
+     *      this.isSubscribedBroadcast(TerminateBroadcast)==True&&
+     *      receivedBroadcast=pre receivedBroadcast+1
+     *      receivedEvent=pre receivedEvent+1
+     *      after terminated:
+     *      messageBus.isRegister(this)==False && terminated=True
      */
     @Override
     public final void run() {

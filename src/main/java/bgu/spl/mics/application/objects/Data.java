@@ -24,8 +24,8 @@ public class Data {
 
     // Internal use.
     private int nFragmantatedBatches; // The number of batches sent to be processed. 
-    private int nProcessedBatches; // The number of samples wich the gpu has proccesed.
-    private int nTrainedBatches; // The number of samples wich the gpu has proccesed.
+    private int nProcessedBatches; // The number of samples witch the gpu has proccesed.
+    private int nTrainedBatches; // The number of samples witch the gpu has proccesed.
 
     public Data(String name, Type type, int size) {
         this.name = name;
@@ -63,6 +63,8 @@ public class Data {
      * @param gpu The GPU who created the batch
      * @return
      * @throws IllegalArgumentException
+     * @pre gpu != null && !this.isFragmantationFinished()
+     * @post nFragmantatedBatches= pre nFragmantatedBatches+1
      */
     public DataBatch createBatch(GPU gpu) throws IllegalArgumentException{
         DataBatch batch = null;
@@ -80,7 +82,10 @@ public class Data {
     public boolean isFragmantationFinished() {
         return this.nFragmantatedBatches * BATCH_SIZE == this.size;
     }
-
+    /**
+     * @pre !this.isProcessingFinished() && this.nProcessedBatches < this.nFragmantatedBatches
+     * @post nProcessedBatches= pre nProcessedBatches+1
+     */
     public void batchProcessed() throws IllegalArgumentException {
         
         if (this.isProcessingFinished() | this.nProcessedBatches >= this.nFragmantatedBatches) {
@@ -92,7 +97,10 @@ public class Data {
     public boolean isProcessingFinished() {
         return this.nProcessedBatches * BATCH_SIZE == this.size;
     }
-
+    /**
+     * @pre !this.isTrainingFinished() && this.nTrainedBatches < this.nFragmantatedBatches
+     * @post nTrainedBatches= pre nTrainedBatches+1
+     */
     public void batchTrained()  throws IllegalCallerException {
         
         if (this.isTrainingFinished() | this.nTrainedBatches >= this.nFragmantatedBatches | this.nTrainedBatches >= this.nProcessedBatches) {

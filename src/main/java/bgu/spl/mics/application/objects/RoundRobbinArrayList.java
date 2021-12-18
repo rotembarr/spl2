@@ -15,6 +15,10 @@ public class RoundRobbinArrayList<T> {
     public int size() {
         return this.list.size();
     }
+    /**
+     * @pre none
+     * @post list.size()= pre list.size()+1
+     */
     public boolean add(T arg) {
         return this.list.add(arg);
     }
@@ -27,7 +31,10 @@ public class RoundRobbinArrayList<T> {
         this.index = (this.index + 1) % this.list.size();
         return next;
     }
-
+    /**
+     * @pre none
+     * @post list.size()= pre list.size()-1
+     */
     public T remove(T arg) {
         int delIndex = this.list.indexOf(arg);
         if (delIndex >= 0 && delIndex < this.index) {

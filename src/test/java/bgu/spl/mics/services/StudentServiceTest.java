@@ -1,11 +1,9 @@
 package bgu.spl.mics.services;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -16,15 +14,12 @@ import bgu.spl.mics.MicroService;
 import bgu.spl.mics.application.messages.PublishConferenceBroadcast;
 import bgu.spl.mics.application.messages.PublishResultEvent;
 import bgu.spl.mics.application.messages.TestModelEvent;
-import bgu.spl.mics.application.messages.TickBroadcast;
 import bgu.spl.mics.application.messages.TrainModelEvent;
 import bgu.spl.mics.application.objects.Data;
 import bgu.spl.mics.application.objects.Model;
 import bgu.spl.mics.application.objects.Student;
-import bgu.spl.mics.application.objects.Model.Status;
 import bgu.spl.mics.application.services.StudentService;
 import bgu.spl.mics.application.services.TimeService;
-import bgu.spl.mics.example.ExampleMicroService;
 
 public class StudentServiceTest {
     
@@ -121,11 +116,6 @@ public class StudentServiceTest {
         };
     };
 
-    @Before
-    public void setUp() {
-        this.messageBus = MessageBusImpl.getInstance();
-    }
-
     public void testCore(int nStudents, int nMessages, int milisec) {
        
         List<StudentService> studentServiceArr = new LinkedList<StudentService>();
@@ -142,14 +132,7 @@ public class StudentServiceTest {
             }
             studentServiceArr.add(studentService);            
         }
-
-        List<Thread> studentThreadArr = new LinkedList<Thread>();
-        for (int i = 0; i < studentServiceArr.size(); i++) {
-            Thread studentThread = new Thread(studentServiceArr.get(i));
-            studentThreadArr.add(studentThread); 
-            studentThread.start();
-        }
-
+        
         
         // Validation.
         DemeTrainMicroService trainService = new DemeTrainMicroService("train");
@@ -161,6 +144,13 @@ public class StudentServiceTest {
         trainThread.start();
         testThread.start();
         publishThread.start();
+
+        List<Thread> studentThreadArr = new LinkedList<Thread>();
+        for (int i = 0; i < studentServiceArr.size(); i++) {
+            Thread studentThread = new Thread(studentServiceArr.get(i));
+            studentThreadArr.add(studentThread); 
+            studentThread.start();
+        }
         
         // Tick.
         TimeService timeService = new TimeService("time", milisec, nStudents*nMessages);
@@ -172,8 +162,8 @@ public class StudentServiceTest {
             for(int i = 0; i < studentThreadArr.size(); i++) {
                 studentThreadArr.get(i).join();
             }
-            assertEquals(nMessages*nStudents, trainService.getMsgCnt());
-            assertEquals(nMessages*nStudents, testService.getMsgCnt());
+            assertEquals("train failure", nMessages*nStudents, trainService.getMsgCnt());
+            assertEquals("test failure", nMessages*nStudents, testService.getMsgCnt());
 
             int cnt = 0;
             for (int i = 0; i < studentServiceArr.size(); i++) {
@@ -190,13 +180,22 @@ public class StudentServiceTest {
         }
 
     }
-
-    // @Test TODO
-    // public void test_1Student() {
-    //     testCore(1, 100, 1);
-    // }
+    
+    @Before
+    public void setUp() {
+        System.out.println("Cleaning messageBus");
+        this.messageBus = MessageBusImpl.getInstance();
+        this.messageBus.clean();
+    }
+    
+        // @Test TODO
+        // public void test_1Student() {
+        //     testCore(1, 100, 1);
+        // }
+    
     @Test
     public void test_100Student() {
+        System.out.println("running test_100Student");
         testCore(30, 100, 8);
     }
 }

@@ -72,7 +72,7 @@ public class CPU {
     }
 
     /**
-     * Return if we are currentky proessing a batch.
+     * Return if we are currently processing a batch.
      * @return this.isProcessing
      * 
      * @pre none

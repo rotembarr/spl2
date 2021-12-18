@@ -1,7 +1,6 @@
 package bgu.spl.mics;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -62,6 +61,15 @@ public class MessageBusImpl implements MessageBus {
 		return SingletoneHolder.instance;
 	}
 
+	// For tests uses.
+	public void clean() {
+		this.serviceToMesssageMap = new HashMap<MicroService, List<Class<? extends Message>> >();
+		this.serviceToQueueMap = new HashMap<MicroService, BlockingQueue<Message>>();
+		this.eventToFutureMap = new HashMap<Event<?>, Future<?>>();
+
+		this.eventToServiceMap = new HashMap<Class<? extends Message>, RoundRobbinArrayList<MicroService>>();
+		this.broadcastToServiceMap = new HashMap<Class<? extends Message>, List<MicroService>> ();
+	}
 
     /**
      * Indication if {@code m} register.
