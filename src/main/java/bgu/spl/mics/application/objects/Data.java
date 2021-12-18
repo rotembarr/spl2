@@ -1,5 +1,7 @@
 package bgu.spl.mics.application.objects;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import com.google.gson.annotations.Expose;
 
 /**
@@ -22,15 +24,24 @@ public class Data {
     @Expose(serialize = true, deserialize = true)
     private int size;
 
-    // Internal use.
-    private int nFragmantatedBatches; // The number of batches sent to be processed. 
-    private int nProcessedBatches; // The number of samples witch the gpu has proccesed.
-    private int nTrainedBatches; // The number of samples witch the gpu has proccesed.
+    // Internal use - there is no good reason it will be atomic, but when it wasn't. it cause a bug.
+    private AtomicInteger nFragmantatedBatches; // The number of batches sent to be processed. 
+    private AtomicInteger nProcessedBatches; // The number of samples witch the gpu has proccesed.
+    private AtomicInteger nTrainedBatches; // The number of samples witch the gpu has proccesed.
 
     public Data(String name, Type type, int size) {
         this.name = name;
         this.type = type;
         this.size = size; 
+        this.nFragmantatedBatches = new AtomicInteger();
+        this.nProcessedBatches = new AtomicInteger();
+        this.nTrainedBatches = new AtomicInteger();
+    }
+
+    public void recreateAtomicIntegres() {
+        this.nFragmantatedBatches = new AtomicInteger();
+        this.nProcessedBatches = new AtomicInteger();
+        this.nTrainedBatches = new AtomicInteger();
     }
     
     /**
@@ -74,13 +85,13 @@ public class Data {
         }
 
         // Create the batch.
-        batch = new DataBatch(gpu, this, this.nFragmantatedBatches*BATCH_SIZE); 
-        this.nFragmantatedBatches += 1;
+        batch = new DataBatch(gpu, this, this.nFragmantatedBatches.intValue()*BATCH_SIZE); 
+        this.nFragmantatedBatches.incrementAndGet();
 
         return batch;
     }
     public boolean isFragmantationFinished() {
-        return this.nFragmantatedBatches * BATCH_SIZE == this.size;
+        return this.nFragmantatedBatches.intValue() * BATCH_SIZE == this.size;
     }
     /**
      * @pre !this.isProcessingFinished() && this.nProcessedBatches < this.nFragmantatedBatches
@@ -88,27 +99,30 @@ public class Data {
      */
     public void batchProcessed() throws IllegalArgumentException {
         
-        if (this.isProcessingFinished() | this.nProcessedBatches >= this.nFragmantatedBatches) {
+        if (this.isProcessingFinished() | this.nProcessedBatches.intValue() >= this.nFragmantatedBatches.intValue()) {
             throw new IllegalArgumentException();
         }
 
-        this.nProcessedBatches += 1;
+        this.nProcessedBatches.incrementAndGet();
     }
     public boolean isProcessingFinished() {
-        return this.nProcessedBatches * BATCH_SIZE == this.size;
+        return this.nProcessedBatches.intValue() * BATCH_SIZE == this.size;
     }
     /**
      * @pre !this.isTrainingFinished() && this.nTrainedBatches < this.nFragmantatedBatches
      * @post nTrainedBatches= pre nTrainedBatches+1
      */
-    public void batchTrained()  throws IllegalCallerException {
+    public void batchTrained()  throws IllegalArgumentException {
         
-        if (this.isTrainingFinished() | this.nTrainedBatches >= this.nFragmantatedBatches | this.nTrainedBatches >= this.nProcessedBatches) {
-            throw new IllegalCallerException();
+        if (this.isTrainingFinished() | this.nTrainedBatches.intValue() >= this.nFragmantatedBatches.intValue() | this.nTrainedBatches.intValue() >= this.nProcessedBatches.intValue()) {
+            System.out.println("bug " + this.getName() + " " + this.nFragmantatedBatches + " " + this.nProcessedBatches + " " + this.nTrainedBatches);
+
+            throw new IllegalArgumentException(this.isTrainingFinished()+ " " + (this.nTrainedBatches.intValue() >= this.nFragmantatedBatches.intValue()) + " " + (this.nTrainedBatches.intValue() >= this.nProcessedBatches.intValue()));
+            
         }
-        this.nTrainedBatches += 1;
+        this.nTrainedBatches.incrementAndGet();
     }
     public boolean isTrainingFinished() {
-        return this.nTrainedBatches * BATCH_SIZE == this.size;
+        return this.nTrainedBatches.intValue() * BATCH_SIZE == this.size;
     }
 }

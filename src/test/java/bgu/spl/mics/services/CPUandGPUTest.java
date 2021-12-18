@@ -122,6 +122,8 @@ public class CPUandGPUTest {
         // Result
         for (int i = 0; i < futureArr.size(); i++) {
             Model modelAfter = futureArr.get(i).get();
+            // System.out.println("aa ");
+
             assertTrue("Model hasn't trained good", modelAfter.getStatus() == Model.Status.TRAINED);
         }
 

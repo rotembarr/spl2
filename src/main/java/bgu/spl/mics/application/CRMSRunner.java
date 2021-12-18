@@ -103,6 +103,7 @@ public class CRMSRunner {
             JsonStudentInformation si = jsonInformation.Students.get(i);
             StudentService sts = new StudentService(si.name, si.department, si.status); 
             for (int j = 0; j < si.models.size(); j++) {
+                si.models.get(j).recreateAtomicIntegres();
                 sts.addModelToTrain(new Model(si.models.get(j).getName(), si.models.get(j), sts.getStudent()));
             }
             this.studentServices.add(sts);
@@ -250,7 +251,7 @@ public class CRMSRunner {
         // }
         // CRMSRunner crmsRunner = new CRMSRunner(args[0]);
 
-        CRMSRunner crmsRunner = new CRMSRunner("/home/rotem/projects/spl2/example_input.json");
+        CRMSRunner crmsRunner = new CRMSRunner("/users/studs/bsc/2022/gevk/prpjects/spl2/example_input.json");
         crmsRunner.run();
     }
 }

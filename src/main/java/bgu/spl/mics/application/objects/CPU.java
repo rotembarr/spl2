@@ -202,6 +202,8 @@ public class CPU {
             throw new IllegalArgumentException();
         }
 
+        // System.out.println("proccessed " + batch.getData().getName());
+
         batch.setAsProcessed();
         this.nOfProcessedBatches++;
         this.isProcessing = false;
@@ -256,7 +258,7 @@ public class CPU {
             DataBatch batch = null;
             while (this.batchesQueue.size() < 2 && ((batch = this.tryToFetchBatch()) != null)) {
                 if (batch.getGPU() == null || batch.getData() == null) {
-                    throw new IllegalCallerException();
+                    throw new IllegalArgumentException();
                 } else {
                     this.batchesQueue.add(batch);    
                 }

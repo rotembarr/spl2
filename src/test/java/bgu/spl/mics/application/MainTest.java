@@ -13,8 +13,8 @@ public class MainTest {
 
     @Test
     public void test() {
-        CRMSRunner dut = new CRMSRunner("/home/rotem/projects/spl2/example_input.json");
+        CRMSRunner dut = new CRMSRunner("/users/studs/bsc/2022/gevk/prpjects/spl2/example_input.json");
         dut.run();
-        dut.log("/home/rotem/projects/spl2/output.json");
+        dut.log("/users/studs/bsc/2022/gevk/prpjects/spl2/output.json");
     }
 }

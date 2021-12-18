@@ -369,6 +369,8 @@ public class GPU {
         }
 
         // Stop train.
+        // System.out.println("trained " + batch.getData().getName());
+
         batch.setAsTrained();
         this.isTraining = false;
         this.trainingCnt = 0;
