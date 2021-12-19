@@ -193,7 +193,7 @@ public class MessageBusImpl implements MessageBus {
 		}
 
 		// Get and remove the event.
-		Future<T> future = (Future<T>)this.eventToFutureMap.get(e); // TODO - check cast
+		Future<T> future = (Future<T>)this.eventToFutureMap.get(e); 
 		this.eventToFutureMap.remove(e);
 
 		// Resolve the event.
@@ -208,7 +208,7 @@ public class MessageBusImpl implements MessageBus {
 	public synchronized void sendBroadcast(Broadcast b) {
 		if (b == null) {
 			return;
-		} // TODO
+		} 
 
 		if (!this.broadcastToServiceMap.containsKey(b.getClass())) {
 			return;

@@ -85,11 +85,12 @@ public class Cluster {
 		return this.unprocessedBatches.size();
 	}
 	/**
+	 * Uses for tests only
 	 * @pre none
 	 * @post nOfBatchesProcessedByCPUs.get()==0;
 	 */
 	public void clearStatistics() {
-		this.nOfBatchesProcessedByCPUs.set(0); // TODO
+		this.nOfBatchesProcessedByCPUs.set(0); 
 	}
 	/**
 	 * @pre none

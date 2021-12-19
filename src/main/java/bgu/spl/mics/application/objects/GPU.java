@@ -435,7 +435,6 @@ public class GPU {
             this.processedBatchesQueue.poll();
         }
 
-        // TODO
         // check if a model finish his training.
         if (this.modelsToTrain.size() > 0 && this.modelsToTrain.get(0).getData().isTrainingFinished()) {
             this.doneTrainingModel(this.modelsToTrain.get(0));

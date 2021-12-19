@@ -18,7 +18,6 @@ public class Future<T> {
 	 * This should be the the only public constructor in this class.
 	 */
 	public Future() {
-		//TODO: implement this
 		this.done = false;
 		this.returnObj = null;
 	}
@@ -38,7 +37,7 @@ public class Future<T> {
 			try {
 				this.wait();
 			} catch (Exception e) {
-				e.printStackTrace(); // TODO
+				e.printStackTrace();
 			}
 		}
 			

@@ -1,5 +1,6 @@
 package bgu.spl.mics.application;
 
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -245,13 +246,29 @@ public class CRMSRunner {
     }
 
     public static void main(String[] args) {
-
-        // if (args.length != 2) {
+        
+        // Checkers.
+        if (args.length != 2) {
+            System.out.println("Running required <input file> <output file> but given " + args.length + " arguments");
+            return;
+        }
+        // File inputFile = new File(args[0]);
+        // if (!inputFile.exists()) {
+        //     System.out.println("Bad input path " + args[0]);
         //     System.exit(1);
         // }
-        // CRMSRunner crmsRunner = new CRMSRunner(args[0]);
+        // File outputFile = new File(args[1]);
+        // if (!outputFile.exists()) {
+        //     System.out.println("Bad output path " + args[1]);
+        //     System.exit(1);
+        // }
+        System.out.println(args[0]);
+        System.out.println(args[1]);
 
-        CRMSRunner crmsRunner = new CRMSRunner("/users/studs/bsc/2022/gevk/prpjects/spl2/example_input.json");
+        // Application.
+        System.out.println("Running The Program");
+        CRMSRunner crmsRunner = new CRMSRunner(args[0]);
         crmsRunner.run();
+        crmsRunner.log(args[1]);
     }
 }
