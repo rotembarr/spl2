@@ -1,7 +1,6 @@
 package bgu.spl.mics;
 
 import java.util.ArrayList;
-import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -294,12 +293,7 @@ public class MessageBusImpl implements MessageBus {
 		{
 			Set<Class<? extends Message>> eventSet = eventToServiceMap.keySet();
 			for (Iterator<Class<? extends Message>> iter = eventSet.iterator(); iter.hasNext();) {
-				Class<? extends Message> type = null;
-				try {
-					type = iter.next();
-				} catch (ConcurrentModificationException e) {
-					e.printStackTrace();
-				}
+				Class<? extends Message> type = iter.next();
 
 				RoundRobbinArrayList<MicroService> list = this.eventToServiceMap.get(type);
 

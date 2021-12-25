@@ -34,7 +34,7 @@ public class TimeService extends MicroService{
 		
 		// Create ticks.
 		Timer timer = new Timer();
-		
+
 		timer.schedule(new TimerTask() {
 			int timeCnt = 0;
 			

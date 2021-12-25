@@ -287,10 +287,9 @@ public class GPU {
     /**
      * This function is a non-blocking function.
      * It tries to fetch proccessed batch from the cluster.
-     * It doesnt care of vRAM size.
      * @return Fetched batch. If no batch fetched, return null.
      * 
-     * @pre none
+     * @pre this.processedBatchesQueue.size() >= this.vRAMsizeInBatches()
      * @post if we can fetch, {@return} = @pre(cluster.getProcessedBatch(this))
      *       else, {@return} = null.
      *  && {@return}.getGPU() = this.

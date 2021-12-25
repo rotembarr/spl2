@@ -78,7 +78,7 @@ public class StudentService extends MicroService {
                             // System.out.println(model.getName() + " " + model.getResult());
                             // Send Event.
                             if (model.getResult() == Model.Result.GOOD) {
-                                future = sendEvent(new PublishResultEvent(student, future.get()));                                
+                                future = sendEvent(new PublishResultEvent(student, future.get()));
                                 future = null;
                             } else {
                                 student.addModelThatCouldntPublish(model);
